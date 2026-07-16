@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sketch 001: Product Feed</title>
+  <link rel="stylesheet" href="../themes/default.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font-sans); background: var(--color-bg); color: var(--color-text); }
+    body { padding-top: 48px; }
+
+    /* Variant Nav */
+    #variant-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9998;
+      background: var(--color-surface); border-bottom: 1px solid var(--color-border);
+      padding: 8px 16px; display: flex; gap: 8px; align-items: center;
+    }
+    .variant-tab {
+      padding: 6px 14px; border-radius: var(--radius-full); border: 1px solid var(--color-border);
+      background: transparent; cursor: pointer; font-size: var(--text-sm);
+      font-family: var(--font-sans); color: var(--color-text-secondary);
+      transition: all 0.15s ease;
+    }
+    .variant-tab:hover { background: var(--color-surface-alt); }
+    .variant-tab.active { background: var(--color-primary); color: white; border-color: var(--color-primary); }
+
+    .variant { display: none; }
+    .variant.active { display: block; }
+
+    /* Sketch Toolbar */
+    #sketch-tools {
+      position: fixed; bottom: 12px; right: 12px; z-index: 9999;
+      font-family: var(--font-sans); font-size: 12px;
+      background: rgba(0,0,0,0.75); color: white; padding: 8px 12px;
+      border-radius: var(--radius-md); opacity: 0.3; transition: opacity 0.2s;
+      display: flex; gap: 8px; align-items: center;
+    }
+    #sketch-tools:hover { opacity: 1; }
+    #sketch-tools select, #sketch-tools button {
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2);
+      color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;
+    }
+    #sketch-tools button.active-viewport { background: var(--color-primary); border-color: var(--color-primary); }
+
+    /* Content wrapper for viewport */
+    .sketch-content { max-width: 100%; margin: 0 auto; transition: max-width 0.3s ease; }
+    .sketch-content.phone { max-width: 375px; }
+    .sketch-content.tablet { max-width: 768px; }
+    .sketch-content.desktop { max-width: 1280px; }
+
+    /* Badge */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: var(--radius-full);
+      font-size: var(--text-xs); font-weight: 500;
+    }
+    .badge-agent { background: var(--color-agent-light); color: var(--color-agent); }
+    .badge-trending { background: var(--color-accent-light); color: #b45309; }
+    .badge-match { background: var(--color-success-light); color: #047857; }
+
+    /* Animations */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-in { animation: fadeIn 0.3s ease forwards; }
+  </style>
+</head>
+<body>
+
+<!-- Variant Nav -->
+<div id="variant-nav">
+  <button class="variant-tab active" onclick="showVariant('a')">A: Classic Grid</button>
+  <button class="variant-tab" onclick="showVariant('b')">B: Agent-Powered Feed</button>
+  <button class="variant-tab" onclick="showVariant('c')">C: Split Browse</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- VARIANT A: Classic Grid (Amazon-style) -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="variant-a" class="variant active">
+  <div class="sketch-content">
+    <!-- Top Nav Bar -->
+    <header style="background:var(--color-primary);padding:12px 24px;display:flex;align-items:center;gap:16px;">
+      <div style="font-size:var(--text-xl);font-weight:700;color:white;">PulseCart</div>
+      <div style="flex:1;max-width:600px;margin:0 auto;">
+        <div style="position:relative;">
+          <input type="text" id="search-a" placeholder="Search products..."
+            style="width:100%;padding:10px 16px 10px 40px;border-radius:var(--radius-full);border:none;font-size:var(--text-base);"
+            oninput="filterProducts('a', this.value)">
+          <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--color-text-muted);" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;color:white;font-size:var(--text-sm);">
+        <span style="cursor:pointer;">Orders</span>
+        <span style="cursor:pointer;">Cart (2)</span>
+        <span style="cursor:pointer;">Sign In</span>
+      </div>
+    </header>
+
+    <!-- Filter Bar -->
+    <div style="padding:12px 24px;background:var(--color-surface);border-bottom:1px solid var(--color-border);display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="filter-chip active" onclick="toggleFilter(this)" style="padding:6px 14px;border-radius:var(--radius-full);border:1px solid var(--color-primary);background:var(--color-primary-light);color:var(--color-primary);font-size:var(--text-sm);cursor:pointer;">All</button>
+      <button class="filter-chip" onclick="toggleFilter(this)" style="padding:6px 14px;border-radius:var(--radius-full);border:1px solid var(--color-border);background:transparent;color:var(--color-text-secondary);font-size:var(--text-sm);cursor:pointer;">Laptops</button>
+      <button class="filter-chip" onclick="toggleFilter(this)" style="padding:6px 14px;border-radius:var(--radius-full);border:1px solid var(--color-border);background:transparent;color:var(--color-text-secondary);font-size:var(--text-sm);cursor:pointer;">Chairs</button>
+      <button class="filter-chip" onclick="toggleFilter(this)" style="padding:6px 14px;border-radius:var(--radius-full);border:1px solid var(--color-border);background:transparent;color:var(--color-text-secondary);font-size:var(--text-sm);cursor:pointer;">Headphones</button>
+      <button class="filter-chip" onclick="toggleFilter(this)" style="padding:6px 14px;border-radius:var(--radius-full);border:1px solid var(--color-border);background:transparent;color:var(--color-text-secondary);font-size:var(--text-sm);cursor:pointer;">Accessories</button>
+    </div>
+
+    <!-- Product Grid -->
+    <div id="grid-a" style="padding:24px;display:grid;grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));gap:20px;">
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- VARIANT B: Agent-Powered Feed (Social-style) -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="variant-b" class="variant" style="display:none">
+  <div class="sketch-content">
+    <!-- Header -->
+    <header style="background:var(--color-surface);border-bottom:1px solid var(--color-border);padding:12px 24px;display:flex;align-items:center;gap:16px;">
+      <div style="font-size:var(--text-xl);font-weight:700;color:var(--color-primary);">PulseCart</div>
+      <div style="flex:1;max-width:500px;margin:0 auto;">
+        <input type="text" id="search-b" placeholder="What are you looking for?"
+          style="width:100%;padding:10px 16px;border-radius:var(--radius-lg);border:1px solid var(--color-border);font-size:var(--text-base);background:var(--color-surface-alt);"
+          oninput="filterProducts('b', this.value)">
+      </div>
+      <div style="display:flex;gap:12px;font-size:var(--text-sm);color:var(--color-text-secondary);">
+        <span style="cursor:pointer;">Cart (2)</span>
+        <span style="cursor:pointer;">Sign In</span>
+      </div>
+    </header>
+
+    <!-- Agent Insight Banner -->
+    <div style="background:linear-gradient(135deg, var(--color-agent-light), var(--color-primary-light));padding:16px 24px;border-bottom:1px solid var(--color-border);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-agent)" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <span style="font-size:var(--text-sm);font-weight:600;color:var(--color-agent);">Personalization Agent</span>
+      </div>
+      <p style="font-size:var(--text-sm);color:var(--color-text-secondary);" id="agent-insight-b">
+        Based on your recent searches, we think you'll love these gaming accessories.
+      </p>
+    </div>
+
+    <!-- Feed -->
+    <div id="feed-b" style="max-width:680px;margin:0 auto;padding:24px 16px;">
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- VARIANT C: Split Browse (Left panel + grid) -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="variant-c" class="variant" style="display:none">
+  <div class="sketch-content" style="display:flex;height:calc(100vh - 48px);">
+    <!-- Left Sidebar -->
+    <aside style="width:280px;background:var(--color-surface);border-right:1px solid var(--color-border);padding:24px;overflow-y:auto;flex-shrink:0;">
+      <div style="font-size:var(--text-xl);font-weight:700;color:var(--color-primary);margin-bottom:24px;">PulseCart</div>
+
+      <!-- Search -->
+      <div style="margin-bottom:24px;">
+        <input type="text" id="search-c" placeholder="Search..."
+          style="width:100%;padding:10px 12px;border-radius:var(--radius-md);border:1px solid var(--color-border);font-size:var(--text-sm);"
+          oninput="filterProducts('c', this.value)">
+      </div>
+
+      <!-- Categories -->
+      <div style="margin-bottom:24px;">
+        <h3 style="font-size:var(--text-sm);font-weight:600;color:var(--color-text);margin-bottom:8px;">Categories</h3>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <button onclick="toggleSidebarFilter(this)" style="text-align:left;padding:8px 12px;border-radius:var(--radius-md);border:none;background:var(--color-primary-light);color:var(--color-primary);font-size:var(--text-sm);cursor:pointer;font-weight:500;">All Products</button>
+          <button onclick="toggleSidebarFilter(this)" style="text-align:left;padding:8px 12px;border-radius:var(--radius-md);border:none;background:transparent;color:var(--color-text-secondary);font-size:var(--text-sm);cursor:pointer;">Laptops</button>
+          <button onclick="toggleSidebarFilter(this)" style="text-align:left;padding:8px 12px;border-radius:var(--radius-md);border:none;background:transparent;color:var(--color-text-secondary);font-size:var(--text-sm);cursor:pointer;">Chairs</button>
+          <button onclick="toggleSidebarFilter(this)" style="text-align:left;padding:8px 12px;border-radius:var(--radius-md);border:none;background:transparent;color:var(--color-text-secondary);font-size:var(--text-sm);cursor:pointer;">Headphones</button>
+          <button onclick="toggleSidebarFilter(this)" style="text-align:left;padding:8px 12px;border-radius:var(--radius-md);border:none;background:transparent;color:var(--color-text-secondary);font-size:var(--text-sm);cursor:pointer;">Accessories</button>
+        </div>
+      </div>
+
+      <!-- Agent Recommendations -->
+      <div style="background:var(--color-agent-light);border-radius:var(--radius-lg);padding:16px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-agent)" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <span style="font-size:var(--text-xs);font-weight:600;color:var(--color-agent);">RECOMMENDED FOR YOU</span>
+        </div>
+        <div style="font-size:var(--text-sm);color:var(--color-text-secondary);line-height:1.5;">
+          Gaming peripherals based on your search history
+        </div>
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;" id="sidebar-recs">
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main style="flex:1;padding:24px;overflow-y:auto;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <h2 style="font-size:var(--text-lg);font-weight:600;">All Products <span style="color:var(--color-text-muted);font-weight:400;" id="product-count-c">(12 items)</span></h2>
+        <select style="padding:6px 12px;border:1px solid var(--color-border);border-radius:var(--radius-md);font-size:var(--text-sm);background:var(--color-surface);">
+          <option>Relevance</option>
+          <option>Price: Low to High</option>
+          <option>Price: High to Low</option>
+          <option>Newest</option>
+        </select>
+      </div>
+      <div id="grid-c" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));gap:16px;">
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Sketch Toolbar -->
+<div id="sketch-tools">
+  <select onchange="document.querySelector('link[href*=themes]').href='../themes/'+this.value+'.css'">
+    <option value="default">Default</option>
+  </select>
+  <button onclick="setViewport('')" class="active-viewport" id="vp-desktop">Desktop</button>
+  <button onclick="setViewport('tablet')" id="vp-tablet">Tablet</button>
+  <button onclick="setViewport('phone')" id="vp-phone">Phone</button>
+</div>
+
+<script>
+// Product Data
+const products = [
+  { id: 1, name: 'ROG Strix G16 Gaming Laptop', category: 'laptops', price: 1299.99, image: '💻', rating: 4.8, reviews: 234, badge: 'trending' },
+  { id: 2, name: 'Secretlab TITAN Evo Chair', category: 'chairs', price: 499.00, image: '🪑', rating: 4.7, reviews: 189, badge: 'match' },
+  { id: 3, name: 'Sony WH-1000XM5 Headphones', category: 'headphones', price: 349.99, image: '🎧', rating: 4.9, reviews: 567, badge: 'trending' },
+  { id: 4, name: 'Logitech G Pro X Superlight', category: 'accessories', price: 79.99, image: '🖱️', rating: 4.6, reviews: 891, badge: null },
+  { id: 5, name: 'Razer BlackWidow V4 Keyboard', category: 'accessories', price: 169.99, image: '⌨️', rating: 4.5, reviews: 123, badge: null },
+  { id: 6, name: 'ASUS ROG Swift 27" Monitor', category: 'accessories', price: 799.99, image: '🖥️', rating: 4.8, reviews: 67, badge: 'agent' },
+  { id: 7, name: 'Herman Miller Aeron Chair', category: 'chairs', price: 1395.00, image: '🪑', rating: 4.9, reviews: 432, badge: null },
+  { id: 8, name: 'Corsair K100 RGB Keyboard', category: 'accessories', price: 229.99, image: '⌨️', rating: 4.4, reviews: 98, badge: null },
+  { id: 9, name: 'SteelSeries Arctis Nova Pro', category: 'headphones', price: 349.99, image: '🎧', rating: 4.7, reviews: 211, badge: 'match' },
+  { id: 10, name: 'MSI Raider GE78 HX', category: 'laptops', price: 2499.99, image: '💻', rating: 4.6, reviews: 45, badge: 'agent' },
+  { id: 11, name: 'Logitech MX Master 3S', category: 'accessories', price: 99.99, image: '🖱️', rating: 4.8, reviews: 1023, badge: null },
+  { id: 12, name: 'Noblechairs Hero Series', category: 'chairs', price: 549.00, image: '🪑', rating: 4.5, reviews: 156, badge: null },
+];
+
+function renderProductCard(p, variant) {
+  const badgeHtml = p.badge === 'agent'
+    ? '<span class="badge badge-agent"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg> Agent Pick</span>'
+    : p.badge === 'trending'
+    ? '<span class="badge badge-trending">🔥 Trending</span>'
+    : p.badge === 'match'
+    ? '<span class="badge badge-match">✓ Great Match</span>'
+    : '';
+
+  if (variant === 'b') {
+    return `
+      <div class="feed-card animate-in" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);overflow:hidden;margin-bottom:16px;transition:box-shadow 0.15s ease;cursor:pointer;" onmouseenter="this.style.boxShadow='var(--shadow-lg)'" onmouseleave="this.style.boxShadow='none'">
+        <div style="height:200px;background:var(--color-surface-alt);display:flex;align-items:center;justify-content:center;font-size:64px;">${p.image}</div>
+        <div style="padding:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            ${badgeHtml}
+            <span style="font-size:var(--text-xs);color:var(--color-text-muted);">${p.category}</span>
+          </div>
+          <h3 style="font-size:var(--text-base);font-weight:600;margin-bottom:4px;">${p.name}</h3>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span style="font-size:var(--text-lg);font-weight:700;color:var(--color-primary);">$${p.price.toFixed(2)}</span>
+            <span style="font-size:var(--text-sm);color:var(--color-text-muted);">⭐ ${p.rating} (${p.reviews})</span>
+          </div>
+          <button onclick="event.stopPropagation();addToCart(${p.id})" style="width:100%;padding:10px;border-radius:var(--radius-md);border:none;background:var(--color-primary);color:white;font-weight:500;font-size:var(--text-sm);cursor:pointer;transition:background 0.15s ease;" onmouseenter="this.style.background='var(--color-primary-hover)'" onmouseleave="this.style.background='var(--color-primary)'">Add to Cart</button>
+        </div>
+      </div>`;
+  }
+
+  return `
+    <div class="product-card animate-in" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);overflow:hidden;transition:box-shadow 0.15s ease;cursor:pointer;" onmouseenter="this.style.boxShadow='var(--shadow-md)'" onmouseleave="this.style.boxShadow='none'">
+      <div style="height:160px;background:var(--color-surface-alt);display:flex;align-items:center;justify-content:center;font-size:48px;">${p.image}</div>
+      <div style="padding:14px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+          ${badgeHtml}
+        </div>
+        <h3 style="font-size:var(--text-sm);font-weight:600;margin-bottom:4px;line-height:1.3;">${p.name}</h3>
+        <div style="font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:8px;">⭐ ${p.rating} (${p.reviews})</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:var(--text-base);font-weight:700;color:var(--color-primary);">$${p.price.toFixed(2)}</span>
+          <button onclick="event.stopPropagation();addToCart(${p.id})" style="padding:6px 12px;border-radius:var(--radius-md);border:1px solid var(--color-primary);background:transparent;color:var(--color-primary);font-size:var(--text-xs);font-weight:500;cursor:pointer;transition:all 0.15s ease;" onmouseenter="this.style.background='var(--color-primary)';this.style.color='white'" onmouseleave="this.style.background='transparent';this.style.color='var(--color-primary)'">Add to Cart</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// Render all products
+function renderProducts(filter = '') {
+  const filtered = filter
+    ? products.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()) || p.category.includes(filter.toLowerCase()))
+    : products;
+
+  // Variant A & C: grid
+  ['grid-a', 'grid-c'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = filtered.map(p => renderProductCard(p, 'a')).join('');
+  });
+
+  // Variant B: feed
+  const feedB = document.getElementById('feed-b');
+  if (feedB) feedB.innerHTML = filtered.map(p => renderProductCard(p, 'b')).join('');
+
+  // Variant C: sidebar recs
+  const sidebarRecs = document.getElementById('sidebar-recs');
+  if (sidebarRecs) {
+    const topPicks = products.filter(p => p.badge).slice(0, 3);
+    sidebarRecs.innerHTML = topPicks.map(p => `
+      <div style="display:flex;align-items:center;gap:8px;padding:6px;background:white;border-radius:var(--radius-md);cursor:pointer;">
+        <span style="font-size:20px;">${p.image}</span>
+        <div>
+          <div style="font-size:var(--text-xs);font-weight:500;">${p.name.split(' ').slice(0,3).join(' ')}</div>
+          <div style="font-size:var(--text-xs);color:var(--color-primary);font-weight:600;">$${p.price.toFixed(2)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  const countC = document.getElementById('product-count-c');
+  if (countC) countC.textContent = `(${filtered.length} items)`;
+}
+
+function filterProducts(variant, value) {
+  renderProducts(value);
+}
+
+function addToCart(id) {
+  const btn = event.target;
+  const original = btn.textContent;
+  btn.textContent = '✓ Added';
+  btn.style.background = 'var(--color-success)';
+  btn.style.borderColor = 'var(--color-success)';
+  btn.style.color = 'white';
+  setTimeout(() => {
+    btn.textContent = original;
+    btn.style.background = '';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+  }, 1500);
+}
+
+function toggleFilter(btn) {
+  document.querySelectorAll('.filter-chip').forEach(b => {
+    b.style.background = 'transparent';
+    b.style.borderColor = 'var(--color-border)';
+    b.style.color = 'var(--color-text-secondary)';
+  });
+  btn.style.background = 'var(--color-primary-light)';
+  btn.style.borderColor = 'var(--color-primary)';
+  btn.style.color = 'var(--color-primary)';
+}
+
+function toggleSidebarFilter(btn) {
+  btn.parentElement.querySelectorAll('button').forEach(b => {
+    b.style.background = 'transparent';
+    b.style.color = 'var(--color-text-secondary)';
+    b.style.fontWeight = '400';
+  });
+  btn.style.background = 'var(--color-primary-light)';
+  btn.style.color = 'var(--color-primary)';
+  btn.style.fontWeight = '500';
+}
+
+// Variant switching
+function showVariant(id) {
+  document.querySelectorAll('.variant').forEach(v => { v.style.display = 'none'; v.classList.remove('active'); });
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('variant-' + id).style.display = 'block';
+  document.getElementById('variant-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// Viewport switching
+function setViewport(size) {
+  document.querySelectorAll('.sketch-content').forEach(el => {
+    el.classList.remove('phone', 'tablet', 'desktop');
+    if (size) el.classList.add(size);
+  });
+  document.querySelectorAll('#sketch-tools button').forEach(b => b.classList.remove('active-viewport'));
+  if (size === '') document.getElementById('vp-desktop').classList.add('active-viewport');
+  else if (size === 'tablet') document.getElementById('vp-tablet').classList.add('active-viewport');
+  else if (size === 'phone') document.getElementById('vp-phone').classList.add('active-viewport');
+}
+
+// Init
+renderProducts();
+</script>
+</body>
+</html>
