@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sketch 004: Agent Traces</title>
+  <link rel="stylesheet" href="../themes/default.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font-sans); background: var(--color-bg); color: var(--color-text); }
+    body { padding-top: 48px; }
+
+    #variant-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9998;
+      background: var(--color-surface); border-bottom: 1px solid var(--color-border);
+      padding: 8px 16px; display: flex; gap: 8px; align-items: center;
+    }
+    .variant-tab {
+      padding: 6px 14px; border-radius: var(--radius-full); border: 1px solid var(--color-border);
+      background: transparent; cursor: pointer; font-size: var(--text-sm);
+      font-family: var(--font-sans); color: var(--color-text-secondary);
+      transition: all 0.15s ease;
+    }
+    .variant-tab:hover { background: var(--color-surface-alt); }
+    .variant-tab.active { background: var(--color-primary); color: white; border-color: var(--color-primary); }
+    .variant { display: none; }
+    .variant.active { display: block; }
+
+    #sketch-tools {
+      position: fixed; bottom: 12px; right: 12px; z-index: 9999;
+      font-family: var(--font-sans); font-size: 12px;
+      background: rgba(0,0,0,0.75); color: white; padding: 8px 12px;
+      border-radius: var(--radius-md); opacity: 0.3; transition: opacity 0.2s;
+      display: flex; gap: 8px; align-items: center;
+    }
+    #sketch-tools:hover { opacity: 1; }
+    #sketch-tools select { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; }
+
+    .trace-line { font-family: var(--font-mono); font-size: 12px; line-height: 1.8; }
+    .trace-line .ts { color: var(--color-text-muted); }
+    .trace-line .agent { color: var(--color-agent); font-weight: 500; }
+    .trace-line .action { color: var(--color-text); }
+    .trace-line .result { color: var(--color-success); }
+    .trace-line .warning { color: var(--color-accent); }
+    .trace-line .error { color: var(--color-danger); }
+    .trace-line .thinking { color: var(--color-text-muted); font-style: italic; }
+
+    .trace-step {
+      display: flex; align-items: flex-start; gap: 12px; padding: 12px;
+      border-radius: var(--radius-md); margin-bottom: 8px;
+      transition: background 0.15s ease;
+    }
+    .trace-step:hover { background: var(--color-surface-alt); }
+
+    .trace-icon {
+      width: 28px; height: 28px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 12px;
+      flex-shrink: 0;
+    }
+    .trace-icon.trigger { background: var(--color-primary-light); color: var(--color-primary); }
+    .trace-icon.reasoning { background: var(--color-agent-light); color: var(--color-agent); }
+    .trace-icon.action { background: var(--color-accent-light); color: #b45309; }
+    .trace-icon.result { background: var(--color-success-light); color: var(--color-success); }
+    .trace-icon.guardrail { background: var(--color-danger-light); color: var(--color-danger); }
+
+    @keyframes typeIn { from { width: 0; } to { width: 100%; } }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    .cursor-blink::after { content: '▊'; animation: blink 1s step-end infinite; color: var(--color-agent); }
+
+    @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .trace-animate { animation: fadeSlideIn 0.3s ease forwards; }
+
+    .split-handle {
+      width: 4px; background: var(--color-border); cursor: col-resize;
+      transition: background 0.15s ease;
+    }
+    .split-handle:hover { background: var(--color-primary); }
+  </style>
+</head>
+<body>
+
+<div id="variant-nav">
+  <button class="variant-tab active" onclick="showVariant('a')">A: Split-Screen Demo</button>
+  <button class="variant-tab" onclick="showVariant('b')">B: Visual Flow Diagram</button>
+  <button class="variant-tab" onclick="showVariant('c')">C: Floating Activity Feed</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- VARIANT A: Split-Screen Demo -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="variant-a" class="variant active">
+  <div style="display:flex;height:calc(100vh - 48px);">
+    <!-- Left: User View -->
+    <div style="flex:1;overflow-y:auto;border-right:1px solid var(--color-border);">
+      <!-- User Header -->
+      <div style="padding:12px 20px;background:var(--color-primary);color:white;display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-weight:600;">🛒 PulseCart — Customer View</div>
+        <div style="font-size:var(--text-xs);opacity:0.8;">Aung Min is browsing...</div>
+      </div>
+
+      <!-- Simulated User Actions -->
+      <div style="padding:20px;">
+        <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;">
+          <div style="font-size:var(--text-sm);color:var(--color-text-muted);margin-bottom:8px;">User searches:</div>
+          <div style="background:var(--color-surface-alt);border-radius:var(--radius-md);padding:12px 16px;font-size:var(--text-base);font-weight:500;" id="user-search-a">
+            "gaming laptop"
+          </div>
+        </div>
+
+        <div style="font-size:var(--text-sm);font-weight:600;margin-bottom:12px;color:var(--color-text-secondary);">Results (personalized):</div>
+        <div id="results-a" style="display:flex;flex-direction:column;gap:10px;">
+          <!-- Results will be populated by JS -->
+        </div>
+
+        <div style="margin-top:16px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:16px;">
+          <div style="font-size:var(--text-sm);color:var(--color-text-muted);margin-bottom:8px;">User clicks:</div>
+          <div style="background:var(--color-surface-alt);border-radius:var(--radius-md);padding:12px 16px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:24px;">💻</span>
+            <div>
+              <div style="font-size:var(--text-sm);font-weight:600;">ROG Strix G16 — $1,299.99</div>
+              <div style="font-size:var(--text-xs);color:var(--color-text-muted);">Click "Checkout"</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Demo Controls -->
+        <div style="margin-top:20px;display:flex;gap:8px;justify-content:center;">
+          <button onclick="replayDemo()" style="padding:8px 20px;border-radius:var(--radius-full);border:1px solid var(--color-primary);background:var(--color-primary-light);color:var(--color-primary);font-size:var(--text-sm);font-weight:500;cursor:pointer;">▶ Replay Demo</button>
+          <button onclick="stepDemo()" style="padding:8px 20px;border-radius:var(--radius-full);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-secondary);font-size:var(--text-sm);font-weight:500;cursor:pointer;">⏭ Step</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Agent Trace -->
+    <div style="flex:1;overflow-y:auto;background:#0f172a;color:#e2e8f0;">
+      <!-- Agent Header -->
+      <div style="padding:12px 20px;background:#1e293b;border-bottom:1px solid #334155;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--color-success);animation:pulse 2s infinite;"></div>
+          <span style="font-weight:600;font-size:var(--text-sm);">Agent Activity — Live</span>
+        </div>
+        <span style="font-size:var(--text-xs);color:#94a3b8;">4 agents active</span>
+      </div>
+
+      <!-- Trace Log -->
+      <div id="trace-log-a" style="padding:16px 20px;font-family:var(--font-mono);font-size:12px;line-height:1.8;">
+        <!-- Trace entries populated by JS -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- VARIANT B: Visual Flow Diagram -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="variant-b" class="variant" style="display:none">
+  <div style="max-width:1000px;margin:0 auto;padding:24px;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <h1 style="font-size:var(--text-2xl);font-weight:700;">Agent Pipeline Visualization</h1>
+      <p style="font-size:var(--text-sm);color:var(--color-text-secondary);margin-top:4px;">How agents observe → reason → act in real-time</p>
+      <button onclick="runFlowDemo()" style="margin-top:12px;padding:8px 20px;border-radius:var(--radius-full);border:none;background:var(--color-primary);color:white;font-size:var(--text-sm);font-weight:500;cursor:pointer;">▶ Run Demo Flow</button>
+    </div>
+
+    <!-- Flow Pipeline -->
+    <div id="flow-pipeline" style="display:flex;gap:12px;align-items:stretch;margin-bottom:24px;">
+      <!-- Step 1: Trigger -->
+      <div class="flow-step" id="flow-1" style="flex:1;background:var(--color-surface);border:2px solid var(--color-border);border-radius:var(--radius-xl);padding:16px;opacity:0.4;transition:all 0.3s ease;">
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--color-primary-light);color:var(--color-primary);display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:18px;">📡</div>
+        </div>
+        <h4 style="font-size:var(--text-sm);font-weight:600;text-align:center;margin-bottom:4px;">Trigger</h4>
+        <div style="font-size:var(--text-xs);color:var(--color-text-muted);text-align:center;">User action or scheduled event</div>
+        <div style="margin-top:10px;font-family:var(--font-mono);font-size:11px;background:var(--color-surface-alt);padding:8px;border-radius:var(--radius-sm);color:var(--color-text-secondary);">
+          search("gaming laptop")
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;color:var(--color-text-muted);">→</div>
+
+      <!-- Step 2: Reason -->
+      <div class="flow-step" id="flow-2" style="flex:1;background:var(--color-surface);border:2px solid var(--color-border);border-radius:var(--radius-xl);padding:16px;opacity:0.4;transition:all 0.3s ease;">
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--color-agent-light);color:var(--color-agent);display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:18px;">🧠</div>
+        </div>
+        <h4 style="font-size:var(--text-sm);font-weight:600;text-align:center;margin-bottom:4px;">Reason</h4>
+        <div style="font-size:var(--text-xs);color:var(--color-text-muted);text-align:center;">Agent analyzes context</div>
+        <div style="margin-top:10px;font-family:var(--font-mono);font-size:11px;background:var(--color-surface-alt);padding:8px;border-radius:var(--radius-sm);color:var(--color-text-secondary);">
+          Update affinity scores<br>Re-rank product feed
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;color:var(--color-text-muted);">→</div>
+
+      <!-- Step 3: Act -->
+      <div class="flow-step" id="flow-3" style="flex:1;background:var(--color-surface);border:2px solid var(--color-border);border-radius:var(--radius-xl);padding:16px;opacity:0.4;transition:all 0.3s ease;">
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--color-accent-light);color:#b45309;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:18px;">⚡</div>
+        </div>
+        <h4 style="font-size:var(--text-sm);font-weight:600;text-align:center;margin-bottom:4px;">Act</h4>
+        <div style="font-size:var(--text-xs);color:var(--color-text-muted);text-align:center;">Execute the decision</div>
+        <div style="margin-top:10px;font-family:var(--font-mono);font-size:11px;background:var(--color-surface-alt);padding:8px;border-radius:var(--radius-sm);color:var(--color-text-secondary);">
+          Re-rank 12 products<br>Update UI feed
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;color:var(--color-text-muted);">→</div>
+
+      <!-- Step 4: Guard -->
+      <div class="flow-step" id="flow-4" style="flex:1;background:var(--color-surface);border:2px solid var(--color-border);border-radius:var(--radius-xl);padding:16px;opacity:0.4;transition:all 0.3s ease;">
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--color-success-light);color:var(--color-success);display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:18px;">🛡️</div>
+        </div>
+        <h4 style="font-size:var(--text-sm);font-weight:600;text-align:center;margin-bottom:4px;">Guard</h4>
+        <div style="font-size:var(--text-xs);color:var(--color-text-muted);text-align:center;">Safety check / approval</div>
+        <div style="margin-top:10px;font-family:var(--font-mono);font-size:11px;background:var(--color-surface-alt);padding:8px;border-radius:var(--radius-sm);color:var(--color-text-secondary);">
+          No PII exposed ✓<br>Safe to proceed
+        </div>
+      </div>
+    </div>
+
+    <!-- Agent Detail Cards -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="agent-cards-b">
+      <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span style="font-size:18px;">🎯</span>
+          <span style="font-size:var(--text-sm);font-weight:600;">Recommender Agent</span>
+        </div>
+        <div class="trace-step" style="padding:8px;">
+          <div class="trace-icon trigger" style="width:24px;height:24px;font-size:10px;">1</div>
+          <div><div style="font-size:var(--text-xs);font-weight:500;">Trigger</div><div style="font-size:var(--text-xs);color:var(--color-text-secondary);">User searches "gaming laptop"</div></div>
+        </div>
+        <div class="trace-step" style="padding:8px;">
+          <div class="trace-icon reasoning" style="width:24px;height:24px;font-size:10px;">2</div>
+          <div><div style="font-size:var(--text-xs);font-weight:500;">Reason</div><div style="font-size:var(--text-xs);color:var(--color-text-secondary);">gaming affinity: 0.92, tech: 0.87</div></div>
+        </div>
+        <div class="trace-step" style="padding:8px;">
+          <div class="trace-icon action" style="width:24px;height:24px;font-size:10px;">3</div>
+          <div><div style="font-size:var(--text-xs);font-weight:500;">Act</div><div style="font-size:var(--text-xs);color:var(--color-text-secondary);">Re-ranked 12 products</div></div>
+        </div>
+        <div class="trace-step" style="padding:8px;">
+          <div class="trace-icon result" style="width:24px;height:24px;font-size:10px;">✓</div>
+          <div><div style="font-size:var(--text-xs);font-weight:500;">Result</div><div style="font-size:var(--text-xs);color:var(--color-success);">Feed updated ✓</div></div>
+        </div>
+      </div>
+
+      <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span style="font-size:18px;">📦</span>
+          <span style="font-size:var(--text-sm);font-weight:600;">Order Coordinator</span>
+        </div>
+        <div class="trace-step" style="padding:8px;">
+          <div class="trace-icon trigger" style="width:24px;height:24px;font-size:10px;">1</div>
+          <div><div style="font-size:var(--text-xs);font-weight:500;">Trigger</div><div style="font-size:var(--text-xs);color:var(--color-text-secondary);">User clicks checkout</div></div>
+        </div>
+        <div class="trace-step" style="padding:8px;">
+          <div class="trace-icon reasoning" style="width:24px;height:24px;font-size:10px;">2</div>
+          <div><div style="font-size:var(--text-xs);font-weight:500;">Reason</div><div style="font-size:var(--text-xs);color:var(--color-text-secondary);">Validate item, collect details</div></div>
+        </div>
+        <div class="trace-step" style="padding:8px;">
+          <div class="trace-icon guardrail" style="width:24px;height:24px;font-size:10px;">3</div>
+          <div><div style="font-size:var(--text-xs);font-weight:500;">Guard</div><div style="font-size:var(--text-xs);color:var(--color-danger);">Manager approval required</div></div>
+        </div>
+        <div class="trace-step" style="padding:8px;">
+          <div class="trace-icon result" style="width:24px;height:24px;font-size:10px;">✓</div>
+          <div><div style="font-size:var(--text-xs);font-weight:500;">Result</div><div style="font-size:var(--text-xs);color:var(--color-success);">Order #ORD-2847 queued ✓</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- VARIANT C: Floating Activity Feed -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="variant-c" class="variant" style="display:none">
+  <!-- Main content (simplified product view) -->
+  <div style="max-width:800px;margin:0 auto;padding:24px;">
+    <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:20px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <span style="font-size:32px;">💻</span>
+        <div style="flex:1;">
+          <h2 style="font-size:var(--text-lg);font-weight:600;">ROG Strix G16 Gaming Laptop</h2>
+          <div style="font-size:var(--text-sm);color:var(--color-text-secondary);">16" QHD 240Hz | RTX 4070 | 16GB RAM</div>
+        </div>
+        <div style="font-size:var(--text-xl);font-weight:700;color:var(--color-primary);">$1,299.99</div>
+      </div>
+      <button onclick="triggerFloating()" style="width:100%;padding:12px;border-radius:var(--radius-md);border:none;background:var(--color-primary);color:white;font-weight:600;font-size:var(--text-sm);cursor:pointer;">Add to Cart & Checkout</button>
+    </div>
+
+    <div style="text-align:center;color:var(--color-text-muted);font-size:var(--text-sm);margin-top:20px;">
+      👆 Click checkout — watch the floating agent feed appear
+    </div>
+  </div>
+
+  <!-- Floating Activity Feed -->
+  <div id="floating-feed" style="position:fixed;bottom:80px;right:20px;width:360px;max-height:400px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);box-shadow:var(--shadow-xl);z-index:999;display:none;overflow:hidden;">
+    <!-- Header -->
+    <div style="padding:12px 16px;background:var(--color-agent-light);border-bottom:1px solid var(--color-border);display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--color-success);animation:pulse 2s infinite;"></div>
+        <span style="font-size:var(--text-sm);font-weight:600;color:var(--color-agent);">Agent Activity</span>
+      </div>
+      <button onclick="document.getElementById('floating-feed').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--color-text-muted);font-size:14px;">✕</button>
+    </div>
+
+    <!-- Feed Items -->
+    <div id="floating-items" style="padding:12px;max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;">
+    </div>
+  </div>
+</div>
+
+<div id="sketch-tools">
+  <select onchange="document.querySelector('link[href*=themes]').href='../themes/'+this.value+'.css'">
+    <option value="default">Default</option>
+  </select>
+</div>
+
+<script>
+// Variant A: Split-screen trace data
+const traceSequence = [
+  { ts: '00:00.000', agent: 'RECOMMENDER', type: 'trigger', text: 'Received search event: "gaming laptop"' },
+  { ts: '00:00.120', agent: 'RECOMMENDER', type: 'thinking', text: 'Loading user profile for user_001...' },
+  { ts: '00:00.340', agent: 'RECOMMENDER', type: 'action', text: 'Current affinity: { gaming: 0.78, tech: 0.65, audio: 0.42 }' },
+  { ts: '00:00.510', agent: 'RECOMMENDER', type: 'action', text: 'Updating gaming affinity: 0.78 → 0.92' },
+  { ts: '00:00.680', agent: 'RECOMMENDER', type: 'action', text: 'Re-ranking 12 products by new affinity scores' },
+  { ts: '00:00.890', agent: 'RECOMMENDER', type: 'result', text: 'Feed updated: ROG Strix G16 moved to #1 position' },
+  { ts: '00:01.200', agent: 'MARKET', type: 'trigger', text: 'Scheduled analysis triggered (weekly)' },
+  { ts: '00:01.350', agent: 'MARKET', type: 'action', text: 'Normalizing price data for 15 SKUs...' },
+  { ts: '00:01.800', agent: 'MARKET', type: 'warning', text: 'ALERT: Secretlab TITAN — 10.6% above competitor ($499 vs $449)' },
+  { ts: '00:02.100', agent: 'MARKET', type: 'action', text: 'Generating price review recommendation...' },
+  { ts: '00:02.400', agent: 'MARKET', type: 'result', text: 'Report ready: 2 items need price review' },
+  { ts: '00:05.000', agent: 'COORDINATOR', type: 'trigger', text: 'Checkout initiated: ROG Strix G16' },
+  { ts: '00:05.150', agent: 'COORDINATOR', type: 'action', text: 'Validating item availability...' },
+  { ts: '00:05.320', agent: 'COORDINATOR', type: 'result', text: 'Item in stock ✓' },
+  { ts: '00:05.500', agent: 'COORDINATOR', type: 'thinking', text: 'Waiting for user to provide delivery details...' },
+  { ts: '00:12.000', agent: 'COORDINATOR', type: 'action', text: 'Delivery details received: 123 Main St, Yangon' },
+  { ts: '00:12.200', agent: 'COORDINATOR', type: 'guardrail', text: 'GUARDRAIL: Manager approval required before confirmation' },
+  { ts: '00:12.400', agent: 'COORDINATOR', type: 'action', text: 'Creating approval task #ORD-2847...' },
+  { ts: '00:12.600', agent: 'COORDINATOR', type: 'result', text: 'Order queued for manager review ✓' },
+  { ts: '00:15.000', agent: 'FEEDBACK', type: 'trigger', text: 'Weekly analysis triggered' },
+  { ts: '00:15.200', agent: 'FEEDBACK', type: 'action', text: 'Processing 27 feedback messages...' },
+  { ts: '00:15.800', agent: 'FEEDBACK', type: 'action', text: 'Clustering themes: delivery(12), pricing(8), quality(7)' },
+  { ts: '00:16.200', agent: "FEEDBACK", type: 'result', text: 'Top insight: "delivery visibility" — 12 mentions' },
+  { ts: '00:16.400', agent: 'FEEDBACK', type: 'action', text: 'Generating suggested fix: Add proactive ETA messages' },
+  { ts: '00:16.600', agent: 'FEEDBACK', type: 'result', text: 'Insights report ready for manager ✓' },
+];
+
+let traceIndex = 0;
+let demoInterval;
+
+function addTraceLine(entry) {
+  const log = document.getElementById('trace-log-a');
+  if (!log) return;
+
+  const typeColors = {
+    trigger: 'var(--color-primary)',
+    thinking: '#64748b',
+    action: '#e2e8f0',
+    result: '#10b981',
+    warning: '#f59e0b',
+    guardrail: '#ef4444',
+    error: '#ef4444',
+  };
+
+  const line = document.createElement('div');
+  line.className = 'trace-animate';
+  line.style.marginBottom = '2px';
+  line.innerHTML = `<span class="ts">[${entry.ts}]</span> <span class="agent" style="color:${typeColors[entry.type] || '#e2e8f0'}">[${entry.agent}]</span> <span style="color:${typeColors[entry.type]}">${entry.text}</span>`;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+function replayDemo() {
+  const log = document.getElementById('trace-log-a');
+  if (log) log.innerHTML = '';
+  traceIndex = 0;
+  clearInterval(demoInterval);
+  demoInterval = setInterval(() => {
+    if (traceIndex >= traceSequence.length) {
+      clearInterval(demoInterval);
+      return;
+    }
+    addTraceLine(traceSequence[traceIndex]);
+    traceIndex++;
+  }, 400);
+}
+
+function stepDemo() {
+  if (traceIndex < traceSequence.length) {
+    addTraceLine(traceSequence[traceIndex]);
+    traceIndex++;
+  }
+}
+
+// Variant B: Flow demo
+function runFlowDemo() {
+  const steps = ['flow-1', 'flow-2', 'flow-3', 'flow-4'];
+  steps.forEach(id => {
+    document.getElementById(id).style.opacity = '0.4';
+    document.getElementById(id).style.borderColor = 'var(--color-border)';
+  });
+
+  steps.forEach((id, i) => {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      el.style.opacity = '1';
+      el.style.borderColor = 'var(--color-primary)';
+      el.style.boxShadow = 'var(--shadow-md)';
+    }, i * 800);
+  });
+}
+
+// Variant C: Floating feed
+function triggerFloating() {
+  const feed = document.getElementById('floating-feed');
+  const items = document.getElementById('floating-items');
+  feed.style.display = 'block';
+  items.innerHTML = '';
+
+  const feedData = [
+    { agent: 'Recommender', icon: '🎯', text: 'User added gaming laptop to cart', color: 'var(--color-primary)' },
+    { agent: 'Order Coordinator', icon: '📦', text: 'Validating item availability...', color: 'var(--color-accent)' },
+    { agent: 'Order Coordinator', icon: '📦', text: 'Item in stock ✓', color: 'var(--color-success)' },
+    { agent: 'Order Coordinator', icon: '📦', text: 'Collecting delivery details', color: 'var(--color-accent)' },
+    { agent: 'Order Coordinator', icon: '🛡️', text: 'Manager approval required', color: 'var(--color-danger)' },
+    { agent: 'Order Coordinator', icon: '📦', text: 'Order #ORD-2847 queued ✓', color: 'var(--color-success)' },
+  ];
+
+  feedData.forEach((item, i) => {
+    setTimeout(() => {
+      const div = document.createElement('div');
+      div.className = 'trace-animate';
+      div.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--color-surface-alt);border-radius:var(--radius-md);font-size:var(--text-xs);';
+      div.innerHTML = `
+        <span style="font-size:14px;">${item.icon}</span>
+        <div>
+          <div style="font-weight:600;color:${item.color};margin-bottom:2px;">${item.agent}</div>
+          <div style="color:var(--color-text-secondary);">${item.text}</div>
+        </div>
+      `;
+      items.appendChild(div);
+      items.scrollTop = items.scrollHeight;
+    }, i * 800);
+  });
+}
+
+function showVariant(id) {
+  document.querySelectorAll('.variant').forEach(v => { v.style.display = 'none'; v.classList.remove('active'); });
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('variant-' + id).style.display = 'block';
+  document.getElementById('variant-' + id).classList.add('active');
+  event.target.classList.add('active');
+  clearInterval(demoInterval);
+}
+
+// Auto-play on load
+setTimeout(replayDemo, 500);
+</script>
+</body>
+</html>
