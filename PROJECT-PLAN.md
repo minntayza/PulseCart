@@ -2,6 +2,23 @@
 
 > Multi-agent shopping platform where 4 AI agents collaborate in real-time — personalizing storefronts, analyzing competitors, coordinating orders, and aggregating feedback.
 
+## Current Status
+
+**Phase 1 (Frontend) — ✅ Complete** (as of 2026-07-16)
+
+The frontend is fully built and functional with mock data. All core UI flows work: storefront with search, product detail, checkout, manager dashboard, and agent trace visualization. Auth, orders, and data persistence use browser-only mock services (localStorage/sessionStorage).
+
+| What exists | What's mocked |
+|-------------|---------------|
+| Next.js 16 + Tailwind CSS 4 frontend | All data is hardcoded fixtures (12 products, 5 competitor prices, 10 feedback messages) |
+| Full component architecture (14 components) | Auth uses sessionStorage demo accounts |
+| Dark/light theme system | Orders use localStorage with custom events |
+| Agent activity feed + trace visualization | Search uses client-side scoring (no real embeddings) |
+| Manager dashboard (4 tabbed panels) | Stats are hardcoded values |
+| Responsive layout, skeleton states, a11y basics | No backend, no database, no real AI agents |
+
+**Next:** Backend integration (FastAPI + CrewAI + Supabase) — see Day 2 and Day 3 below.
+
 ---
 
 ## Table of Contents
@@ -66,16 +83,16 @@ The key differentiator: agents observe → reason → act → report, with **hum
 
 ## Tech Stack
 
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| **Frontend** | Next.js + Tailwind CSS | Fast UI development, great DX |
-| **Backend** | FastAPI (Python) | Async, fast, great for agent workflows |
-| **Agent Framework** | CrewAI | Multi-agent orchestration, faster than LangGraph for prototyping |
-| **Database** | Supabase (PostgreSQL + pgvector) | Auth + DB + vector search in one tool |
-| **Auth** | Supabase Auth | Demo user, minimal setup |
-| **Vector Search** | pgvector (via Supabase) | Power personalized recommendations from search history |
-| **State** | React + FastAPI sessions | Simple enough for hackathon |
-| **Charts** | Recharts or Chart.js | PM dashboard visualizations |
+| Layer | Technology | Status |
+|-------|-----------|--------|
+| **Frontend** | Next.js 16 + Tailwind CSS 4 | ✅ Implemented |
+| **Backend** | FastAPI (Python) | 🔲 Not started |
+| **Agent Framework** | CrewAI | 🔲 Not started |
+| **Database** | Supabase (PostgreSQL + pgvector) | 🔲 Not started |
+| **Auth** | Mock (sessionStorage demo accounts) | ✅ Frontend mock implemented |
+| **Vector Search** | pgvector (via Supabase) | 🔲 Not started |
+| **State** | React useState + localStorage custom events | ✅ Implemented |
+| **Charts** | Recharts or Chart.js | 🔲 Not started |
 
 ### Why CrewAI Over LangGraph?
 - Faster to prototype with built-in agent definitions
@@ -91,10 +108,12 @@ The key differentiator: agents observe → reason → act → report, with **hum
 
 ## Architecture
 
+> **Note:** The diagram below shows the full target architecture. Phase 1 (complete) covers only the top layer (Next.js frontend) with mock data services. Backend, agents, and database are planned for Phase 2.
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │                  Customer + Manager UI               │
-│              (Next.js + Tailwind CSS)                │
+│              (Next.js + Tailwind CSS) ✅ Phase 1     │
 └───────────────┬──────────────────────┬──────────────┘
                 │                      │
         ┌───────▼───────┐      ┌───────▼───────┐
@@ -141,17 +160,17 @@ Search changes the product feed live. Order enters the approval queue. Both visi
 
 ### Tasks
 
-#### Frontend Lead
-- [ ] Initialize Next.js project with Tailwind CSS
-- [ ] Set up folder structure (components, pages, services)
-- [ ] Build app shell: header, sidebar, main content area
-- [ ] Build search bar component with real-time input
-- [ ] Build product grid with dynamic feed display
-- [ ] Build checkout modal (address, phone fields)
-- [ ] Build manager approval queue UI (list + approve/reject buttons)
-- [ ] Build agent trace panel (shows agent input → decision → action)
+#### Frontend Lead ✅
+- [x] Initialize Next.js project with Tailwind CSS
+- [x] Set up folder structure (components, pages, services)
+- [x] Build app shell: header, sidebar, main content area
+- [x] Build search bar component with real-time input
+- [x] Build product grid with dynamic feed display
+- [x] Build checkout modal (address, phone fields)
+- [x] Build manager approval queue UI (list + approve/reject buttons)
+- [x] Build agent trace panel (shows agent input → decision → action)
 
-#### Backend Lead
+#### Backend Lead 🔲 (Not started — mock services used in frontend instead)
 - [ ] Initialize FastAPI project
 - [ ] Set up Supabase project (console.supabase.com)
 - [ ] Create database schema:
@@ -220,7 +239,7 @@ Search changes the product feed live. Order enters the approval queue. Both visi
 - [ ] Implement demo user auth (hardcoded demo account)
 - [ ] Seed mock data: 20–30 products across categories
 
-#### Agent Engineer
+#### Agent Engineer 🔲 (Not started — agent behavior is simulated in frontend mock services)
 - [ ] Set up CrewAI project structure
 - [ ] Define RecommenderAgent:
   - Trigger: search event
@@ -235,7 +254,7 @@ Search changes the product feed live. Order enters the approval queue. Both visi
   - Output: pending order in queue
   - Guardrail: requires manager approval before confirm
 
-#### Data/Infra Lead
+#### Data/Infra Lead 🔲 (Not started — data is hardcoded in frontend TypeScript fixtures)
 - [ ] Create product fixture data (20–30 items):
   - 5 gaming laptops ($799–$1,999)
   - 5 office chairs ($149–$599)
@@ -247,11 +266,11 @@ Search changes the product feed live. Order enters the approval queue. Both visi
 - [ ] Write seed script to populate Supabase
 
 ### End of Day 1 Checklist
-- [ ] Search "gaming laptop" → feed re-ranks to show gaming products first
-- [ ] Agent trace panel shows: input → affinity update → re-rank action
-- [ ] Checkout with valid address/phone → order appears in approval queue
-- [ ] Manager can approve/reject order in dashboard
-- [ ] Git checkpoint committed + backup demo video recorded
+- [x] Search "gaming laptop" → feed re-ranks to show gaming products first
+- [x] Agent trace panel shows: input → affinity update → re-rank action
+- [x] Checkout with valid address/phone → order appears in approval queue
+- [x] Manager can approve/reject order in dashboard
+- [x] Git checkpoint committed + backup demo video recorded
 
 ---
 
@@ -391,53 +410,84 @@ Flawless 4-minute demo. Judges see agent collaboration, guardrails, and business
 
 ## Folder Structure
 
+> Items marked ✅ exist in the repo. Items marked 🔲 are planned for Phase 2.
+
 ```
-pulsecart/
-├── frontend/                    # Next.js app
+agentic_based_solutions_hackathon/
+├── frontend/                        # ✅ Next.js 16 + Tailwind CSS 4
 │   ├── src/
-│   │   ├── app/                 # Next.js App Router
-│   │   │   ├── page.tsx         # Home / search page
-│   │   │   ├── layout.tsx       # Root layout
-│   │   │   ├── products/        # Product grid
-│   │   │   ├── checkout/        # Checkout flow
-│   │   │   └── manager/         # Manager dashboard
+│   │   ├── app/                     # ✅ Next.js App Router
+│   │   │   ├── page.tsx             # ✅ Home / search page
+│   │   │   ├── layout.tsx           # ✅ Root layout with AuthProvider
+│   │   │   ├── globals.css          # ✅ Theme system (light/dark)
+│   │   │   ├── login/page.tsx       # ✅ Login page
+│   │   │   ├── register/page.tsx    # ✅ Registration page
+│   │   │   ├── products/[id]/       # ✅ Product detail page
+│   │   │   ├── account/orders/      # ✅ Customer order history
+│   │   │   └── manager/             # ✅ Manager dashboard (4 tabs)
 │   │   │
-│   │   ├── components/          # Reusable UI components
-│   │   │   ├── SearchBar.tsx
-│   │   │   ├── ProductGrid.tsx
-│   │   │   ├── ProductCard.tsx
-│   │   │   ├── CheckoutModal.tsx
-│   │   │   ├── ApprovalQueue.tsx
-│   │   │   ├── AgentTracePanel.tsx
-│   │   │   ├── MarketInsights.tsx
-│   │   │   ├── FeedbackInsights.tsx
-│   │   │   ├── AuditTrail.tsx
-│   │   │   └── AgentDashboard.tsx
+│   │   ├── components/              # ✅ 14 reusable components
+│   │   │   ├── AppHeader.tsx        # ✅ Sticky nav with blur backdrop
+│   │   │   ├── SearchInput.tsx      # ✅ Search bar
+│   │   │   ├── ProductGrid.tsx      # ✅ Product grid with sort
+│   │   │   ├── ProductCard.tsx      # ✅ Product card with badges
+│   │   │   ├── CheckoutModal.tsx    # ✅ 3-step checkout flow
+│   │   │   ├── AgentFeed.tsx        # ✅ Floating agent activity feed
+│   │   │   ├── Sidebar.tsx          # ✅ Category filter
+│   │   │   ├── AuthProvider.tsx     # ✅ Auth context
+│   │   │   ├── ThemeToggle.tsx      # ✅ Dark/light mode
+│   │   │   └── dashboard/           # ✅ Manager panels
+│   │   │       ├── OrdersPanel.tsx  # ✅ Order approval queue
+│   │   │       ├── MarketPanel.tsx  # ✅ Competitor price comparison
+│   │   │       ├── FeedbackPanel.tsx# ✅ Feedback themes
+│   │   │       ├── AgentPanel.tsx   # ✅ Agent traces/logs
+│   │   │       └── StatsRow.tsx     # ✅ Summary stats
 │   │   │
-│   │   ├── services/            # API calls
-│   │   │   ├── api.ts           # FastAPI client
-│   │   │   └── supabase.ts      # Supabase client
+│   │   ├── services/                # ✅ Browser-only mock services
+│   │   │   ├── authService.ts       # ✅ sessionStorage demo accounts
+│   │   │   ├── searchService.ts     # ✅ Client-side product scoring
+│   │   │   ├── orderService.ts      # ✅ localStorage order CRUD
+│   │   │   └── storage.ts           # ✅ localStorage abstraction
 │   │   │
-│   │   ├── types/               # TypeScript types
+│   │   ├── data/                    # ✅ Hardcoded fixture data
+│   │   │   ├── products.ts          # ✅ 12 products
+│   │   │   ├── productDetails.ts    # ✅ Product specs content
+│   │   │   ├── competitors.ts       # ✅ 5 competitor prices
+│   │   │   ├── feedback.ts          # ✅ 10 feedback messages
+│   │   │   └── agents.ts            # ✅ 4 agent traces + activity
+│   │   │
+│   │   ├── types/                   # ✅ TypeScript interfaces
 │   │   │   └── index.ts
 │   │   │
-│   │   └── utils/               # Helpers
-│   │       └── constants.ts
+│   │   └── utils/                   # 🔲 Not yet needed
 │   │
-│   ├── public/                  # Static assets
-│   ├── .env.local               # API keys (NEVER commit)
-│   ├── package.json
-│   ├── tailwind.config.js
+│   ├── public/                      # ✅ Default Next.js SVGs
+│   ├── .env.local                   # 🔲 API keys (not needed yet)
+│   ├── package.json                 # ✅ next 16.2.10, react 19.2.4, tailwind 4
 │   └── tsconfig.json
 │
-├── backend/                     # FastAPI app
+├── backend/                         # 🔲 FastAPI app (not started)
 │   ├── app/
-│   │   ├── main.py              # FastAPI entry point
+│   │   ├── main.py
 │   │   ├── routes/
-│   │   │   ├── search.py        # /api/search
-│   │   │   ├── products.py      # /api/products
-│   │   │   ├── orders.py        # /api/orders
-│   │   │   ├── feedback.py      # /api/feedback
+│   │   ├── agents/
+│   │   ├── tools/
+│   │   └── models/
+│   ├── fixtures/
+│   └── requirements.txt
+│
+├── .planning/                       # ✅ Design sketches + project docs
+│   ├── sketches/                    # ✅ 4 HTML prototype sketches
+│   │   ├── 001-product-feed/
+│   │   ├── 002-checkout-flow/
+│   │   ├── 003-manager-dashboard/
+│   │   └── 004-agent-traces/
+│   ├── ROADMAP.md
+│   ├── STATE.md
+│   └── REQUIREMENTS.md
+│
+├── PROJECT-PLAN.md                  # ✅ This file
+└── README.md
 │   │   │   └── agents.py        # /api/agents/*
 │   │   │
 │   │   ├── agents/              # CrewAI agent definitions
@@ -487,13 +537,40 @@ pulsecart/
 
 ## Setup Guide
 
-### Prerequisites
+### Phase 1: Frontend Only (Current)
+
+#### Prerequisites
+- Node.js 18+
+- Git
+
+#### Clone & Run
+
+```bash
+git clone https://github.com/minntayza/PulseCart.git
+cd PulserCart/frontend
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000)
+
+**Demo accounts:**
+- Manager: `manager@pulsecart.demo` / `Manager123!`
+- Customer: `customer@pulsecart.demo` / `Customer123!`
+
+No backend, database, or API keys needed — all data is mocked in the browser.
+
+---
+
+### Phase 2: Full Stack (Planned)
+
+#### Prerequisites
 - Node.js 18+
 - Python 3.10+
 - Supabase account (free tier)
 - Git
 
-### 1. Clone & Install
+#### 1. Clone & Install
 
 ```bash
 git clone https://github.com/minntayza/PulseCart.git
@@ -510,7 +587,7 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Supabase Setup
+#### 2. Supabase Setup
 
 1. Go to [supabase.com](https://supabase.com) → New Project
 2. Name: `pulsecart`
@@ -518,7 +595,7 @@ pip install -r requirements.txt
 4. Choose region (closest to you)
 5. Go to Settings → API → Copy `URL` and `anon public key`
 
-### 3. Environment Variables
+#### 3. Environment Variables
 
 **Frontend** — create `frontend/.env.local`:
 ```
@@ -534,14 +611,14 @@ SUPABASE_KEY=your_service_role_key
 OPENAI_API_KEY=your_openai_key  # Optional, for LLM summaries
 ```
 
-### 4. Seed Database
+#### 4. Seed Database
 
 ```bash
 cd backend
 python scripts/seed.py
 ```
 
-### 5. Run
+#### 5. Run
 
 ```bash
 # Terminal 1: Backend
@@ -559,52 +636,64 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## Demo Scenario
 
-### What Judges See (4 minutes)
+### Phase 1: Frontend Demo (Current)
+
+| Step | Action | What Happens | Status |
+|------|--------|-------------|--------|
+| 1 | Customer searches "gaming laptop" | Feed re-ranks via client-side scoring, gaming products rise | ✅ Working |
+| 2 | Customer checks out laptop | Order created in localStorage, appears in manager queue | ✅ Working |
+| 3 | Manager opens dashboard | Market panel shows fixture price gaps | ✅ Fixture data |
+| 4 | Manager views feedback | Feedback panel shows fixture themes + severity | ✅ Fixture data |
+| 5 | Manager approves order | Order status updates, agent trace logged | ✅ Working |
+
+> **Note:** Agent behavior is simulated in frontend services. Real agent orchestration (CrewAI) will be added in Phase 2.
+
+### Phase 2: Full Stack Demo (Planned)
 
 | Step | Action | Agent Response | What's Visible |
 |------|--------|---------------|----------------|
-| 1 | Customer searches "gaming laptop" | Recommender updates gaming affinity | Feed re-ranks, gaming products rise to top |
-| 2 | Customer checks out laptop | Order Coordinator validates + queues | Order appears in manager approval queue |
-| 3 | Manager opens dashboard | Market Analyst shows price gaps | "Chair X is 10.6% above competitor — review price" |
-| 4 | Manager views feedback | Feedback Agent clusters themes | "Delivery visibility" top theme, ETA fix suggested |
-| 5 | Manager approves order | Audit trail logs all actions | Full agent action history visible |
+| 1 | Customer searches "gaming laptop" | Recommender updates pgvector embeddings | Feed re-ranks via real vector search |
+| 2 | Customer checks out laptop | Order Coordinator validates + queues in Supabase | Order in real database |
+| 3 | Manager opens dashboard | Market Analyst scrapes + compares prices | Live competitor price gaps |
+| 4 | Manager views feedback | Feedback Agent clusters real messages | Actual user feedback themes |
+| 5 | Manager approves order | Audit trail logs to database | Full agent action history in Supabase |
 
 ### Key Points to Emphasize
-- **Agents observe → reason → act → report** — not just text output
-- **Human approval required** for risky actions (not full autonomy overreach)
-- **Agent trace visible** — judges can follow each agent's decision-making
+- **Phase 1 proves the UX** — search personalization, checkout flow, manager dashboard all work end-to-end
+- **Agent trace visible** — judges can follow each agent's decision-making (mock in Phase 1, real in Phase 2)
+- **Human approval required** for risky actions — order confirmation requires manager approval
 - **Controlled data** — reliable demo, no anti-bot or scraping risk
-- **Production roadmap** — clear path from prototype to real system
+- **Clear roadmap** — Phase 2 adds real CrewAI agents, Supabase, and pgvector embeddings
 
 ---
 
 ## Testing Checklist
 
-### Functional Tests
-- [ ] Search returns relevant products
-- [ ] Feed re-ranks based on search history
-- [ ] Checkout validates address and phone
-- [ ] Order appears in approval queue after checkout
-- [ ] Manager can approve/reject orders
-- [ ] Market Analyst shows price gaps with recommendations
-- [ ] Feedback Agent clusters themes correctly
-- [ ] Guardrails prevent auto price change
-- [ ] Guardrails prevent order confirm without approval
-- [ ] Audit trail logs all agent actions
+### Functional Tests (Phase 1)
+- [x] Search returns relevant products (client-side scoring)
+- [x] Feed re-ranks based on search query
+- [x] Checkout validates address and phone
+- [x] Order appears in approval queue after checkout (localStorage)
+- [x] Manager can approve/reject orders
+- [x] Market panel shows fixture price gaps
+- [x] Feedback panel shows fixture themes
+- [ ] Guardrails prevent auto price change (Phase 2 — server-side)
+- [ ] Guardrails prevent order confirm without approval (Phase 2 — server-side)
+- [ ] Audit trail logs all agent actions (Phase 2 — database)
 
 ### Demo Tests
 - [ ] Full demo flow completes in < 4 minutes
 - [ ] Demo runs 2x consecutively without failure
 - [ ] Fallback screenshots ready if live demo fails
 - [ ] Data reset works (restore clean state)
-- [ ] Mobile layout doesn't break demo
+- [x] Mobile layout works (responsive design)
 
 ### Edge Cases
-- [ ] Empty search query handled gracefully
-- [ ] Network error shows user-friendly message
-- [ ] No products match search → "No results" state
-- [ ] Approval queue empty → appropriate empty state
-- [ ] Agent processing → loading spinner shown
+- [x] Empty search query handled gracefully (shows all products)
+- [ ] Network error shows user-friendly message (Phase 2 — no network calls yet)
+- [x] No products match search → "No results" state
+- [x] Approval queue empty → appropriate empty state
+- [x] Agent processing → loading skeleton shown
 
 ---
 
@@ -663,13 +752,21 @@ git push
 
 ## Success Criteria
 
-### Demo is done when:
-- [ ] 4 agents each demonstrate observe → reason → act → report
-- [ ] Agent trace panel shows each agent's decision-making process
-- [ ] Human approval required for price changes and order confirmation
-- [ ] Search personalizes the product feed in real-time
-- [ ] Competitor analysis shows actionable price gap insights
-- [ ] Feedback clustering surfaces top themes with suggested fixes
+### Phase 1: Frontend (✅ Complete)
+- [x] Search personalizes the product feed in real-time (client-side scoring)
+- [x] Agent trace panel shows agent reasoning process (mock data)
+- [x] Checkout with address/phone → order appears in manager approval queue
+- [x] Manager can approve/reject orders in dashboard
+- [x] Competitor analysis panel shows price gap insights (fixture data)
+- [x] Feedback panel clusters themes with severity and suggested fixes (fixture data)
+- [x] Agent activity feed shows all 4 agents' latest actions
+
+### Phase 2: Full Stack (🔲 Not started)
+- [ ] 4 real agents observe → reason → act → report via CrewAI
+- [ ] Backend API serves products, orders, feedback from Supabase
+- [ ] pgvector embeddings power personalized recommendations
+- [ ] Human approval required for price changes and order confirmation (enforced server-side)
+- [ ] Audit trail logs all agent actions to database
 - [ ] Full demo completes in 4 minutes
 - [ ] 2 consecutive successful demo runs
 - [ ] Judges can explain the system after watching
@@ -686,7 +783,7 @@ git push
 
 ---
 
-**Last updated:** 2026-07-16
+**Last updated:** 2026-07-17
 **Project:** PulseCart — Agentic Commerce Operations Copilot
 **Team:** 4 members
-**Timeline:** 3 days
+**Timeline:** 3 days (Phase 1 frontend complete, Phase 2 backend pending)

@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { products } from '@/data/products';
 import { Product } from '@/types';
+import { searchProducts } from '@/services/searchService';
+import { getProducts } from '@/services/productService';
+import { clearCart, readCart, writeCart } from '@/services/storage';
 import Sidebar from '@/components/Sidebar';
 import ProductGrid from '@/components/ProductGrid';
 import CheckoutModal from '@/components/CheckoutModal';
@@ -13,10 +16,31 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState<Product[]>([]);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [rankedProducts, setRankedProducts] = useState(products);
+  const [isSearching, setIsSearching] = useState(false);
+  const [catalogError, setCatalogError] = useState('');
 
   // Listen for checkout open from nav
   useEffect(() => {
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      try {
+        const liveProducts = await getProducts();
+        if (active) { setRankedProducts(liveProducts); setCatalogError(''); }
+      } catch {
+        if (active) setCatalogError('Live products could not be loaded. Make sure FastAPI is running on port 8000.');
+      }
+    }, 0);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, []);
+
+  useEffect(() => {
     const handler = () => setIsCheckoutOpen(true);
+    const shouldOpen = window.sessionStorage.getItem('pulsecart:open-cart');
+    if (shouldOpen) {
+      window.sessionStorage.removeItem('pulsecart:open-cart');
+      window.setTimeout(() => setIsCheckoutOpen(true), 0);
+    }
     window.addEventListener('pulsecart:open-checkout', handler);
     return () => window.removeEventListener('pulsecart:open-checkout', handler);
   }, []);
@@ -25,6 +49,7 @@ export default function Home() {
   useEffect(() => {
     const handler = (e: Event) => {
       const ce = e as CustomEvent;
+      setIsSearching(true);
       setSearchQuery(ce.detail ?? '');
     };
     window.addEventListener('pulsecart:search', handler);
@@ -36,33 +61,71 @@ export default function Home() {
     window.dispatchEvent(new CustomEvent('pulsecart:cart-count', { detail: cart.length }));
   }, [cart]);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => setCart(readCart()), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      try {
+        const result = await searchProducts(searchQuery);
+        if (active) { setRankedProducts(result.products); setCatalogError(''); }
+      } catch {
+        if (active) setCatalogError('Search is temporarily unavailable.');
+      } finally { if (active) setIsSearching(false); }
+    }, searchQuery ? 250 : 0);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [searchQuery]);
+
   const filteredProducts = category === 'all'
-    ? products
-    : products.filter((p) => p.category === category);
+    ? rankedProducts
+    : rankedProducts.filter((p) => p.category === category);
 
   const handleAddToCart = (product: Product) => {
-    setCart((prev) => [...prev, product]);
+    const next = [...cart, product];
+    setCart(next);
+    writeCart(next);
   };
 
   const handleRemoveFromCart = (id: string) => {
-    setCart((prev) => prev.filter((p) => p.id !== id));
+    const next = cart.filter((product) => product.id !== id);
+    setCart(next);
+    writeCart(next);
+  };
+
+  const handleOrderCompleted = () => {
+    clearCart();
+    setCart([]);
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-56px)]">
-      {/* Sidebar - Sketch 001-C Split Browse */}
-      <Sidebar
-        selectedCategory={category}
-        onCategoryChange={setCategory}
-        searchQuery={searchQuery}
-      />
+    <main className="min-h-[calc(100vh-64px)]">
+      <section className="hero-grid border-b border-border/70">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+          <div className="max-w-3xl">
+            <span className="inline-flex rounded-full border border-primary/15 bg-primary-light px-3 py-1 text-xs font-bold text-primary">AI-assisted commerce, with you in control</span>
+            <h1 className="mt-5 text-4xl font-black tracking-[-0.04em] text-foreground sm:text-5xl lg:text-6xl">Find better products.<br/><span className="text-gradient">Understand every choice.</span></h1>
+            <p className="mt-5 max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">Search a smarter storefront that adapts in real time, explains its recommendations, and keeps people in charge of important decisions.</p>
+          </div>
+        </div>
+      </section>
 
-      {/* Main content */}
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {catalogError && <div className="mb-5 rounded-2xl border border-danger/20 bg-danger-light px-4 py-3 text-sm text-danger" role="alert">{catalogError}</div>}
+        <Sidebar selectedCategory={category} onCategoryChange={setCategory} />
+
       <ProductGrid
         products={filteredProducts}
         searchQuery={searchQuery}
+        isLoading={isSearching}
         onAddToCart={handleAddToCart}
       />
+      </div>
 
       {/* Floating Agent Feed - Sketch 004-C */}
       <AgentFeed />
@@ -73,7 +136,8 @@ export default function Home() {
         onClose={() => setIsCheckoutOpen(false)}
         cart={cart}
         onRemoveFromCart={handleRemoveFromCart}
+        onOrderCompleted={handleOrderCompleted}
       />
-    </div>
+    </main>
   );
 }
