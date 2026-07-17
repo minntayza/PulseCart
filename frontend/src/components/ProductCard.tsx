@@ -18,9 +18,9 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
 
   return (
     <article className="group overflow-hidden rounded-3xl border border-border/80 bg-surface shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-card-hover">
-      <Link href={`/products/${product.id}`} aria-label={`View details for ${product.name}`} className={`relative grid h-52 place-items-center overflow-hidden bg-gradient-to-br ${visual.gradient}`}>
+      <Link href={`/products/${product.id}`} aria-label={`View details for ${product.name}`} className={`relative grid h-52 place-items-center overflow-hidden bg-gradient-to-br ${visual.gradient}`} style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}>
         <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/50 blur-2xl" />
-        <span className="select-none text-7xl font-black text-foreground/70 transition-transform duration-300 group-hover:scale-110">{visual.symbol}</span>
+        {!product.imageUrl && <span className="select-none text-7xl font-black text-foreground/70 transition-transform duration-300 group-hover:scale-110">{visual.symbol}</span>}
         {badge && <span className="absolute left-4 top-4 rounded-full border border-white/70 bg-white/85 px-3 py-1 text-[11px] font-semibold text-foreground shadow-sm backdrop-blur">{badge}</span>}
         <span className="absolute bottom-4 right-4 rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-secondary">{product.category}</span>
       </Link>
