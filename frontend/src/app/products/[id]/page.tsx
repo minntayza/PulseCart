@@ -3,12 +3,15 @@ import { notFound } from 'next/navigation';
 import { products } from '@/data/products';
 import { getProductDetails } from '@/data/productDetails';
 import ProductDetailActions from '@/components/ProductDetailActions';
+import { getProduct } from '@/services/productService';
 
 export function generateStaticParams() { return products.map((product) => ({ id: product.id })); }
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const product = products.find((candidate) => candidate.id === id);
+  let product = null;
+  try { product = await getProduct(id); }
+  catch { product = products.find((candidate) => candidate.id === id) ?? null; }
   if (!product) notFound();
   const details = getProductDetails(product);
   const related = products.filter((candidate) => candidate.category === product.category && candidate.id !== product.id).slice(0, 3);
@@ -17,7 +20,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   return <main className="min-h-screen bg-background"><div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
     <nav className="mb-7 flex items-center gap-2 text-sm text-text-muted"><Link href="/" className="hover:text-primary">Shop</Link><span>/</span><span className="capitalize">{product.category}</span><span>/</span><span className="truncate text-foreground">{product.name}</span></nav>
     <section className="grid gap-10 lg:grid-cols-[1.15fr_.85fr]">
-      <div className="grid min-h-[28rem] place-items-center overflow-hidden rounded-[2rem] border border-border bg-gradient-to-br from-primary-light via-white to-agent-light"><span className="text-[9rem] font-black text-foreground/70">{symbols[product.category]}</span></div>
+      <div className="grid min-h-[28rem] place-items-center overflow-hidden rounded-[2rem] border border-border bg-gradient-to-br from-primary-light via-white to-agent-light bg-cover bg-center" style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}>{!product.imageUrl && <span className="text-[9rem] font-black text-foreground/70">{symbols[product.category]}</span>}</div>
       <div className="lg:py-4">
         <span className="text-xs font-bold uppercase tracking-[.18em] text-primary">{product.category}</span>
         <h1 className="mt-3 text-4xl font-black tracking-[-.04em] text-foreground">{product.name}</h1>

@@ -8,6 +8,16 @@ export interface Product {
   rating: number;
   reviews: number;
   badge?: 'agent' | 'trending' | 'match';
+  imageUrl?: string | null;
+  stock?: number;
+  overview?: string | null;
+  howItWorks?: string | null;
+  bestFor?: string[];
+  limitations?: string[];
+  specifications?: ProductSpecification[];
+  deliveryEstimate?: string;
+  warranty?: string;
+  isActive?: boolean;
 }
 
 export interface Order {
