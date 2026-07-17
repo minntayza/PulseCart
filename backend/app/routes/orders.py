@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from ..agents.order_coordinator import order_trace
+from ..agents.order_coordinator import complete_delivery, notify_rejection, order_trace
 from ..auth import current_user, manager_user
 from ..models.schemas import AuthUser, CreateOrderRequest, Order, UpdateOrderStatusRequest
 from ..repository import MemoryRepository, SupabaseRepository, get_repository
@@ -8,7 +8,7 @@ router = APIRouter(tags=["orders"])
 
 @router.post("/orders", response_model=Order, status_code=201)
 def create_order(payload: CreateOrderRequest, user: AuthUser = Depends(current_user), repo: MemoryRepository | SupabaseRepository = Depends(get_repository)):
-    order = repo.create_order(user.id, payload)
+    order = repo.create_order(user, payload)
     repo.add_trace(order_trace(order))
     return order
 
@@ -23,5 +23,12 @@ def manager_orders(_: AuthUser = Depends(manager_user), repo: MemoryRepository |
 @router.patch("/manager/orders/{order_id}", response_model=Order)
 def update_order(order_id: str, payload: UpdateOrderStatusRequest, _: AuthUser = Depends(manager_user), repo: MemoryRepository | SupabaseRepository = Depends(get_repository)):
     order = repo.update_order(order_id, payload)
-    repo.add_trace(order_trace(order, "manager decision"))
+    if order.status == "rejected":
+        notify_rejection(repo, order)
+    else:
+        repo.add_trace(order_trace(order, "manager decision"))
     return order
+
+@router.post("/manager/orders/{order_id}/deliver", response_model=Order)
+def deliver_order(order_id: str, _: AuthUser = Depends(manager_user), repo: MemoryRepository | SupabaseRepository = Depends(get_repository)):
+    return complete_delivery(repo, order_id)

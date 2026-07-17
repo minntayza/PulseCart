@@ -4,7 +4,7 @@ from threading import Lock
 from uuid import uuid4
 from fastapi import HTTPException
 from .fixtures import PRODUCTS
-from .models.schemas import AgentTrace, CreateFeedbackRequest, CreateOrderRequest, Feedback, Order, OrderItem, Product, UpdateOrderStatusRequest
+from .models.schemas import AgentTrace, AuthUser, CreateFeedbackRequest, CreateOrderRequest, Feedback, Order, OrderItem, Product, UpdateOrderStatusRequest
 from .config import get_settings
 
 
@@ -14,6 +14,7 @@ class MemoryRepository:
         self.orders: list[Order] = []
         self.traces: list[AgentTrace] = []
         self.feedback: list[Feedback] = []
+        self.email_outbox: dict[str, dict] = {}
         self._lock = Lock()
 
     def list_products(self) -> list[Product]:
@@ -73,7 +74,7 @@ class MemoryRepository:
         with self._lock:
             self.traces = [trace, *self.traces][:100]
 
-    def create_order(self, user_id: str, payload: CreateOrderRequest) -> Order:
+    def create_order(self, user: AuthUser, payload: CreateOrderRequest) -> Order:
         lines: list[OrderItem] = []
         total = Decimal("0")
         for requested in payload.items:
@@ -82,8 +83,8 @@ class MemoryRepository:
             total += line_total
             lines.append(OrderItem(product=product, quantity=requested.quantity, lineTotal=line_total))
         order = Order(
-            id=f"ORD-{uuid4().hex[:8].upper()}", userId=user_id,
-            customerName=payload.customerName.strip(), items=lines,
+            id=f"ORD-{uuid4().hex[:8].upper()}", userId=user.id,
+            customerName=payload.customerName.strip(), customerEmail=user.email, items=lines,
             address=payload.address.strip(), phone=payload.phone.strip(),
             total=total, status="pending", createdAt=datetime.now(timezone.utc),
         )
@@ -95,7 +96,7 @@ class MemoryRepository:
         return [order for order in self.orders if order.userId == user_id]
 
     def all_orders(self) -> list[Order]:
-        order_rank = {"pending": 0, "approved": 1, "rejected": 2}
+        order_rank = {"pending": 0, "approved": 1, "delivered": 2, "rejected": 3}
         return sorted(self.orders, key=lambda order: (order_rank[order.status], -order.createdAt.timestamp()))
 
     def update_order(self, order_id: str, payload: UpdateOrderStatusRequest) -> Order:
@@ -106,6 +107,51 @@ class MemoryRepository:
                     self.orders[index] = updated
                     return updated
         raise HTTPException(status_code=404, detail="Order not found")
+
+    def mark_delivered(self, order_id: str) -> Order:
+        with self._lock:
+            for index, order in enumerate(self.orders):
+                if order.id != order_id:
+                    continue
+                if order.status == "delivered":
+                    return order
+                if order.status != "approved":
+                    raise HTTPException(status_code=409, detail="Only approved orders can be marked as delivered")
+                updated = order.model_copy(update={"status": "delivered", "deliveredAt": datetime.now(timezone.utc)})
+                self.orders[index] = updated
+                return updated
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    def restore_approved(self, order_id: str) -> None:
+        with self._lock:
+            for index, order in enumerate(self.orders):
+                if order.id == order_id and order.status == "delivered":
+                    self.orders[index] = order.model_copy(update={"status": "approved", "deliveredAt": None})
+                    return
+
+    def queue_delivery_email(self, order: Order) -> tuple[str, str]:
+        if not order.customerEmail:
+            raise HTTPException(status_code=409, detail="Order has no customer email")
+        key = f"{order.id}:order_delivered"
+        with self._lock:
+            self.email_outbox.setdefault(key, {"status": "pending", "recipient": order.customerEmail, "attempts": 0})
+        return key, self.email_outbox[key]["status"]
+
+    def queue_rejection_email(self, order: Order) -> tuple[str, str]:
+        if not order.customerEmail:
+            raise HTTPException(status_code=409, detail="Order has no customer email")
+        key = f"{order.id}:order_rejected"
+        with self._lock:
+            self.email_outbox.setdefault(key, {"status": "pending", "recipient": order.customerEmail, "attempts": 0})
+        return key, self.email_outbox[key]["status"]
+
+    def complete_delivery_email(self, outbox_id: str, provider_message_id: str) -> None:
+        with self._lock:
+            self.email_outbox[outbox_id].update({"status": "sent", "provider_message_id": provider_message_id, "attempts": 1})
+
+    def fail_delivery_email(self, outbox_id: str, error: str) -> None:
+        with self._lock:
+            self.email_outbox[outbox_id].update({"status": "failed", "error_message": error[:500], "attempts": 1})
 
     def create_feedback(self, user_id: str, payload: CreateFeedbackRequest) -> Feedback:
         feedback = Feedback(id=f"FDB-{uuid4().hex[:8].upper()}", userId=user_id, message=payload.message.strip())
@@ -170,7 +216,7 @@ class SupabaseRepository:
             "input": {}, "output": trace.model_dump(mode="json"),
         }).execute()
 
-    def create_order(self, user_id: str, payload: CreateOrderRequest) -> Order:
+    def create_order(self, user: AuthUser, payload: CreateOrderRequest) -> Order:
         lines: list[OrderItem] = []
         total = Decimal("0")
         for requested in payload.items:
@@ -181,7 +227,8 @@ class SupabaseRepository:
         order_id = f"ORD-{uuid4().hex[:8].upper()}"
         created_at = datetime.now(timezone.utc)
         self.client.table("orders").insert({
-            "id": order_id, "user_id": user_id, "customer_name": payload.customerName.strip(),
+            "id": order_id, "user_id": user.id, "customer_name": payload.customerName.strip(),
+            "customer_email": user.email,
             "address": payload.address.strip(), "phone": payload.phone.strip(),
             "total": str(total), "status": "pending", "created_at": created_at.isoformat(),
         }).execute()
@@ -189,28 +236,99 @@ class SupabaseRepository:
             {"order_id": order_id, "product_id": line.product.id, "quantity": line.quantity, "unit_price": str(line.product.price), "line_total": str(line.lineTotal)}
             for line in lines
         ]).execute()
-        return Order(id=order_id, userId=user_id, customerName=payload.customerName.strip(), items=lines, address=payload.address.strip(), phone=payload.phone.strip(), total=total, status="pending", createdAt=created_at)
+        return Order(id=order_id, userId=user.id, customerName=payload.customerName.strip(), customerEmail=user.email, items=lines, address=payload.address.strip(), phone=payload.phone.strip(), total=total, status="pending", createdAt=created_at)
 
-    def _orders(self, query) -> list[Order]:
-        response = query.select("*,order_items(quantity,line_total,products(*))").order("created_at", desc=True).execute()
+    def _orders(self, *, user_id: str | None = None, order_id: str | None = None) -> list[Order]:
+        query = self.client.table("orders").select("*,order_items(quantity,line_total,products(*))")
+        if user_id is not None:
+            query = query.eq("user_id", user_id)
+        if order_id is not None:
+            query = query.eq("id", order_id)
+        response = query.order("created_at", desc=True).execute()
         orders: list[Order] = []
         for row in response.data:
             lines = [OrderItem(product=self._product(item["products"]), quantity=item["quantity"], lineTotal=item["line_total"]) for item in row.get("order_items", [])]
-            orders.append(Order(id=row["id"], userId=row["user_id"], customerName=row["customer_name"], items=lines, address=row["address"], phone=row["phone"], total=row["total"], status=row["status"], createdAt=row["created_at"]))
+            orders.append(Order(id=row["id"], userId=row["user_id"], customerName=row["customer_name"], customerEmail=row.get("customer_email"), items=lines, address=row["address"], phone=row["phone"], total=row["total"], status=row["status"], createdAt=row["created_at"], deliveredAt=row.get("delivered_at")))
         return orders
 
     def user_orders(self, user_id: str) -> list[Order]:
-        return self._orders(self.client.table("orders").eq("user_id", user_id))
+        return self._orders(user_id=user_id)
 
     def all_orders(self) -> list[Order]:
-        return self._orders(self.client.table("orders"))
+        return self._orders()
 
     def update_order(self, order_id: str, payload: UpdateOrderStatusRequest) -> Order:
         response = self.client.table("orders").update({"status": payload.status}).eq("id", order_id).execute()
         if not response.data:
             raise HTTPException(status_code=404, detail="Order not found")
-        orders = self._orders(self.client.table("orders").eq("id", order_id))
+        orders = self._orders(order_id=order_id)
         return orders[0]
+
+    def mark_delivered(self, order_id: str) -> Order:
+        delivered_at = datetime.now(timezone.utc)
+        response = self.client.table("orders").update({
+            "status": "delivered", "delivered_at": delivered_at.isoformat(),
+        }).eq("id", order_id).eq("status", "approved").execute()
+        if not response.data:
+            existing = self._orders(order_id=order_id)
+            if not existing:
+                raise HTTPException(status_code=404, detail="Order not found")
+            if existing[0].status == "delivered":
+                return existing[0]
+            raise HTTPException(status_code=409, detail="Only approved orders can be marked as delivered")
+        return self._orders(order_id=order_id)[0]
+
+    def restore_approved(self, order_id: str) -> None:
+        self.client.table("orders").update({
+            "status": "approved", "delivered_at": None,
+        }).eq("id", order_id).eq("status", "delivered").execute()
+
+    def queue_delivery_email(self, order: Order) -> tuple[str, str]:
+        if not order.customerEmail:
+            raise HTTPException(status_code=409, detail="Order has no customer email")
+        existing = self.client.table("email_outbox").select("id,status").eq(
+            "order_id", order.id,
+        ).eq("event_type", "order_delivered").maybe_single().execute()
+        if existing is not None and existing.data:
+            return str(existing.data["id"]), existing.data["status"]
+        response = self.client.table("email_outbox").insert({
+            "order_id": order.id,
+            "event_type": "order_delivered",
+            "recipient": order.customerEmail,
+            "subject": f"PulseCart အော်ဒါ {order.id} ပို့ဆောင်ပြီးပါပြီ",
+            "payload": order.model_dump(mode="json"),
+            "status": "pending",
+        }).execute()
+        return str(response.data[0]["id"]), response.data[0]["status"]
+
+    def queue_rejection_email(self, order: Order) -> tuple[str, str]:
+        if not order.customerEmail:
+            raise HTTPException(status_code=409, detail="Order has no customer email")
+        existing = self.client.table("email_outbox").select("id,status").eq(
+            "order_id", order.id,
+        ).eq("event_type", "order_rejected").maybe_single().execute()
+        if existing is not None and existing.data:
+            return str(existing.data["id"]), existing.data["status"]
+        response = self.client.table("email_outbox").insert({
+            "order_id": order.id,
+            "event_type": "order_rejected",
+            "recipient": order.customerEmail,
+            "subject": f"PulseCart အော်ဒါ {order.id} ကို လက်ခံဆောင်ရွက်ပေးနိုင်ခြင်း မရှိပါ",
+            "payload": order.model_dump(mode="json"),
+            "status": "pending",
+        }).execute()
+        return str(response.data[0]["id"]), response.data[0]["status"]
+
+    def complete_delivery_email(self, outbox_id: str, provider_message_id: str) -> None:
+        self.client.table("email_outbox").update({
+            "status": "sent", "attempts": 1, "provider_message_id": provider_message_id,
+            "sent_at": datetime.now(timezone.utc).isoformat(), "error_message": None,
+        }).eq("id", outbox_id).execute()
+
+    def fail_delivery_email(self, outbox_id: str, error: str) -> None:
+        self.client.table("email_outbox").update({
+            "status": "failed", "attempts": 1, "error_message": error[:500],
+        }).eq("id", outbox_id).execute()
 
     def create_feedback(self, user_id: str, payload: CreateFeedbackRequest) -> Feedback:
         response = self.client.table("feedback").insert({"user_id": user_id, "message": payload.message.strip()}).execute()
