@@ -269,7 +269,7 @@ Customer submits feedback
         ↓
 POST /feedback → backend stores in DB
         ↓
-FeedbackAgent triggers automatically
+Background task triggers FeedbackAgent (async)
         ↓
 Step 1: PII Redaction (Claude API)
 Step 2: Theme Classification (Claude API)
@@ -282,6 +282,11 @@ Manager views Feedback tab
         ↓
 GET /feedback/insights → display themes + fixes
 ```
+
+**Auto-trigger mechanism:**
+- When `POST /feedback` is called, spawn a background task to run `analyze_feedback()`
+- Use `BackgroundTasks` from FastAPI for async execution
+- Rate limit: max 1 analysis per minute (skip if last analysis was <60s ago)
 
 ---
 
