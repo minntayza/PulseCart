@@ -2,7 +2,9 @@
 .env
 .env.local
 backend/.env
+!backend/.env.example
 frontend/.env.local
+!frontend/.env.local.example
 __pycache__/
 *.py[cod]
 .pytest_cache/
