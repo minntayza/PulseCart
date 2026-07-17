@@ -17,17 +17,29 @@ A hackathon prototype demonstrating multi-agent orchestration in a shopping cont
 - **Demo Data**: Hybrid approach — seed mock products + mock competitor prices, with some real scraped data for one controlled source
 - **Cold Start**: New users get trending products until they build a search profile
 - **Anti-scraping**: Mock competitor data for demo; note in roadmap that production would need advanced bypass
+- **Phase 1 Status**: ✅ Frontend complete with mock data (2026-07-16)
 
 ## Requirements
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Public product browsing (unregistered users can view products)
+- [x] User authentication (mock — sessionStorage demo accounts)
+- [x] Search personalizes product feed in real-time (client-side scoring)
+- [x] Checkout flow with address/phone validation
+- [x] Manager approval queue with approve/reject
+- [x] Agent trace visualization
+- [x] Dark/light theme
+- [x] Responsive design
 
-### Active
+### Active (Phase 2 — Not started)
 
-- [ ] Public product browsing (unregistered users can view products)
-- [ ] User authentication (sign up / sign in via Supabase Auth)
+- [ ] Backend API (FastAPI)
+- [ ] CrewAI agent orchestration
+- [ ] Supabase database + auth
+- [ ] pgvector embeddings
+- [ ] Real-time agent collaboration
+- [ ] Server-side guardrails
 - [ ] Personalized home feed (vector embeddings of search history → recommendations)
 - [ ] Competitor price comparison dashboard (agent scrapes/mock data → comparison table)
 - [ ] Automated purchase workflow (agent collects details → notifies PM)
