@@ -1,13 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --primary-light: #eef2ff;
-  --agent: #8b5cf6;
-  --agent-light: #f5f3ff;
+  color-scheme: light;
+  --background: #f7f8fc;
+  --foreground: #111827;
+  --primary: #5b5bd6;
+  --primary-hover: #4747bd;
+  --primary-light: #eeeeff;
+  --agent: #7c3aed;
+  --agent-light: #f5f0ff;
   --success: #10b981;
   --success-light: #ecfdf5;
   --danger: #ef4444;
@@ -15,11 +16,11 @@
   --accent: #f59e0b;
   --accent-light: #fef3c7;
   --surface: #ffffff;
-  --surface-alt: #f1f5f9;
-  --border: #e2e8f0;
-  --border-light: #f1f5f9;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
+  --surface-alt: #f3f4f8;
+  --border: #e5e7ee;
+  --border-light: #f0f1f5;
+  --text-secondary: #5b6475;
+  --text-muted: #9299a8;
 }
 
 @theme inline {
@@ -42,15 +43,65 @@
   --color-border-light: var(--border-light);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: "Courier New", monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
 }
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #0c0e14;
+  --foreground: #f4f5f8;
+  --primary: #8b8cf6;
+  --primary-hover: #a3a4ff;
+  --primary-light: #222344;
+  --agent: #a879ff;
+  --agent-light: #241b36;
+  --success: #34d399;
+  --success-light: #102b24;
+  --danger: #fb7185;
+  --danger-light: #35171d;
+  --accent: #fbbf24;
+  --accent-light: #35280f;
+  --surface: #141720;
+  --surface-alt: #1c202b;
+  --border: #292e3b;
+  --border-light: #202531;
+  --text-secondary: #b0b6c4;
+  --text-muted: #767f90;
+}
+
+* { box-sizing: border-box; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+::selection { background: color-mix(in srgb, var(--primary) 20%, transparent); }
+
+.hero-grid {
+  background-color: #fbfbfe;
+  background-image: linear-gradient(rgba(91,91,214,.055) 1px, transparent 1px), linear-gradient(90deg, rgba(91,91,214,.055) 1px, transparent 1px), radial-gradient(circle at 75% 20%, rgba(124,58,237,.12), transparent 28%);
+  background-size: 32px 32px, 32px 32px, auto;
+}
+:root[data-theme="dark"] .hero-grid {
+  background-color: #10131b;
+  background-image: linear-gradient(rgba(139,140,246,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(139,140,246,.07) 1px, transparent 1px), radial-gradient(circle at 75% 20%, rgba(168,121,255,.14), transparent 30%);
+}
+.text-gradient { background: linear-gradient(120deg, var(--primary), var(--agent)); background-clip: text; color: transparent; }
+.shadow-card { box-shadow: 0 1px 2px rgba(17,24,39,.03), 0 8px 24px rgba(17,24,39,.04); }
+.shadow-card-hover { box-shadow: 0 4px 8px rgba(17,24,39,.05), 0 20px 40px rgba(17,24,39,.09); }
+
+@keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-alt) 25%, var(--border-light) 50%, var(--surface-alt) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 6px; }
