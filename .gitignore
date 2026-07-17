@@ -1,1 +1,10 @@
 *.plan.json
+.env
+.env.local
+backend/.env
+frontend/.env.local
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/

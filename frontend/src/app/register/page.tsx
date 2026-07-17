@@ -19,7 +19,10 @@ export default function RegisterPage() {
     if (form.password.length < 8 || !/[A-Z]/.test(form.password) || !/[a-z]/.test(form.password) || !/\d/.test(form.password)) return setError('Password must be 8+ characters and include uppercase, lowercase, and a number.');
     if (form.password !== form.confirm) return setError('Passwords do not match.');
     setError(''); setIsSubmitting(true);
-    try { await register(form.username, form.email, form.password); router.push('/'); }
+    try {
+      const result = await register(form.username, form.email, form.password);
+      router.push(result.needsEmailConfirmation ? '/login?registered=confirm' : '/');
+    }
     catch (reason) { setError(reason instanceof Error ? reason.message : 'Registration failed.'); }
     finally { setIsSubmitting(false); }
   };
