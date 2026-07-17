@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, field_validator
 
 
 Category = Literal["laptops", "chairs", "headphones", "accessories"]
-OrderStatus = Literal["pending", "approved", "rejected"]
+OrderStatus = Literal["pending", "approved", "rejected", "delivered"]
 
 
 class Product(BaseModel):
@@ -81,12 +81,14 @@ class Order(BaseModel):
     id: str
     userId: str
     customerName: str
+    customerEmail: str | None = None
     items: list[OrderItem]
     address: str
     phone: str
     total: Decimal
     status: OrderStatus = "pending"
     createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    deliveredAt: datetime | None = None
 
 
 class UpdateOrderStatusRequest(BaseModel):

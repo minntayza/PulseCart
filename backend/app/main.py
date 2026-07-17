@@ -5,6 +5,13 @@ from .routes import agents, feedback, manager_products, orders, products, search
 
 settings = get_settings()
 api = FastAPI(title=settings.app_name, version="0.1.0")
+api.add_middleware(
+    CORSMiddleware,
+    allow_origins=list({settings.frontend_url.rstrip("/"), "http://localhost:3000", "http://127.0.0.1:3000"}),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 api.include_router(products.router)
 api.include_router(search.router)
 api.include_router(orders.router)
@@ -17,13 +24,5 @@ def health():
     return {"status": "ok", "mode": "mock" if settings.use_mock_data else "supabase"}
 
 
-# Wrap the complete application so CORS headers are also present on unexpected
-# error responses. This lets the frontend display the real API error instead of
-# the browser masking it as a CORS failure.
-app = CORSMiddleware(
-    app=api,
-    allow_origins=list({settings.frontend_url.rstrip("/"), "http://localhost:3000", "http://127.0.0.1:3000"}),
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Keep both common Uvicorn targets available without changing behavior.
+app = api
