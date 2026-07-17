@@ -25,6 +25,50 @@ class MemoryRepository:
             raise HTTPException(status_code=404, detail="Product not found")
         return product
 
+    def create_product(self, row: dict) -> Product:
+        product = Product(
+            **row,
+            imageUrl=row.get("image_url"), howItWorks=row.get("how_it_works"),
+            bestFor=row.get("best_for") or [],
+            deliveryEstimate=row.get("delivery_estimate") or "2–5 business days",
+            isActive=row.get("is_active", True),
+        )
+        with self._lock:
+            self.products.insert(0, product)
+        return product
+
+    def update_product(self, product_id: str, row: dict) -> Product:
+        with self._lock:
+            for index, product in enumerate(self.products):
+                if product.id == product_id:
+                    updated_dict = product.model_dump(by_alias=True)
+                    # Merge existing with new values
+                    for k, v in row.items():
+                        if k == "image_url":
+                            updated_dict["imageUrl"] = v
+                        elif k == "how_it_works":
+                            updated_dict["howItWorks"] = v
+                        elif k == "best_for":
+                            updated_dict["bestFor"] = v
+                        elif k == "delivery_estimate":
+                            updated_dict["deliveryEstimate"] = v
+                        elif k == "is_active":
+                            updated_dict["isActive"] = v
+                        else:
+                            updated_dict[k] = v
+                    updated = Product(**updated_dict)
+                    self.products[index] = updated
+                    return updated
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    def delete_product(self, product_id: str) -> None:
+        with self._lock:
+            for index, product in enumerate(self.products):
+                if product.id == product_id:
+                    self.products.pop(index)
+                    return
+        raise HTTPException(status_code=404, detail="Product not found")
+
     def add_trace(self, trace: AgentTrace) -> None:
         with self._lock:
             self.traces = [trace, *self.traces][:100]
@@ -108,6 +152,17 @@ class SupabaseRepository:
     def create_product(self, row: dict) -> Product:
         response = self.client.table("products").insert(row).execute()
         return self._product(response.data[0])
+
+    def update_product(self, product_id: str, row: dict) -> Product:
+        response = self.client.table("products").update(row).eq("id", product_id).execute()
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Product not found")
+        return self._product(response.data[0])
+
+    def delete_product(self, product_id: str) -> None:
+        response = self.client.table("products").delete().eq("id", product_id).execute()
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Product not found")
 
     def add_trace(self, trace: AgentTrace) -> None:
         self.client.table("audit_log").insert({
