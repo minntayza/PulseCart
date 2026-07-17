@@ -1,5 +1,8 @@
 from fastapi.testclient import TestClient
 from app.main import app
+from app.models.schemas import Order
+from app.repository import repository
+from app.services.email import delivery_email_html, rejection_email_html
 
 client = TestClient(app)
 customer = {"Authorization": "Bearer demo-customer-token"}
@@ -32,8 +35,19 @@ def test_order_requires_auth_and_manager_decision():
     approved = client.patch(f'/manager/orders/{order["id"]}', json={"status": "approved"}, headers=manager)
     assert approved.status_code == 200
     assert approved.json()["status"] == "approved"
+    assert client.post(f'/manager/orders/{order["id"]}/deliver', headers=customer).status_code == 403
+    delivered = client.post(f'/manager/orders/{order["id"]}/deliver', headers=manager)
+    assert delivered.status_code == 200
+    assert delivered.json()["status"] == "delivered"
+    assert delivered.json()["deliveredAt"] is not None
+    email_html = delivery_email_html(Order(**delivered.json()))
+    assert "ပစ္စည်းပို့ဆောင်ရန် Delivery အပ်နှံလိုက်ပါပြီ" in email_html
+    assert order["id"] in email_html
+    repeated = client.post(f'/manager/orders/{order["id"]}/deliver', headers=manager)
+    assert repeated.status_code == 200
+    assert repeated.json()["status"] == "delivered"
     history = client.get("/orders/me", headers=customer).json()
-    assert any(item["id"] == order["id"] and item["status"] == "approved" for item in history)
+    assert any(item["id"] == order["id"] and item["status"] == "delivered" for item in history)
 
 
 def test_feedback_requires_customer_and_manager_to_list():
@@ -43,3 +57,15 @@ def test_feedback_requires_customer_and_manager_to_list():
     listed = client.get("/feedback", headers=manager)
     assert listed.status_code == 200
     assert any(item["id"] == created.json()["id"] for item in listed.json())
+
+
+def test_rejected_order_queues_burmese_apology_email():
+    payload = {"customerName": "Demo Customer", "address": "123 Demo Street", "phone": "+1 555 0100", "items": [{"productId": "2", "quantity": 1}]}
+    order = client.post("/orders", json=payload, headers=customer).json()
+    rejected = client.patch(f'/manager/orders/{order["id"]}', json={"status": "rejected"}, headers=manager)
+    assert rejected.status_code == 200
+    assert rejected.json()["status"] == "rejected"
+    assert repository.email_outbox[f'{order["id"]}:order_rejected']["status"] == "sent"
+    email_html = rejection_email_html(Order(**rejected.json()))
+    assert "အနူးအညွတ်တောင်းပန်အပ်ပါသည်" in email_html
+    assert order["id"] in email_html
