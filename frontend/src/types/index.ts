@@ -28,8 +28,9 @@ export interface Order {
   address: string;
   phone: string;
   total: number;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'delivered';
   createdAt: string;
+  deliveredAt?: string | null;
 }
 
 export interface ProductSpecification { label: string; value: string; explanation?: string }

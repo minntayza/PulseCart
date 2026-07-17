@@ -5,28 +5,28 @@ import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { Order } from '@/types';
 import { getOrdersForUser } from '@/services/orderService';
-import { pulseCartEvents } from '@/services/storage';
 import { OrderSkeleton } from '@/components/Skeleton';
 
 export default function OrderHistoryPage() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, accessToken, isLoading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadOrders = useCallback(async () => {
-    if (!user) { setIsLoading(false); return; }
-    setOrders(await getOrdersForUser(user.id));
-    setIsLoading(false);
-  }, [user]);
+    if (!user || !accessToken) { setIsLoading(false); return; }
+    try {
+      setOrders(await getOrdersForUser(accessToken));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, accessToken]);
 
   useEffect(() => {
     const initialLoad = window.setTimeout(() => void loadOrders(), 0);
-    window.addEventListener(pulseCartEvents.ordersChanged, loadOrders);
-    window.addEventListener('storage', loadOrders);
+    const refreshInterval = window.setInterval(() => void loadOrders(), 10_000);
     return () => {
       window.clearTimeout(initialLoad);
-      window.removeEventListener(pulseCartEvents.ordersChanged, loadOrders);
-      window.removeEventListener('storage', loadOrders);
+      window.clearInterval(refreshInterval);
     };
   }, [loadOrders]);
 
@@ -43,8 +43,9 @@ export default function OrderHistoryPage() {
             <article key={order.id} className="bg-surface border border-border rounded-xl p-4">
               <div className="flex flex-wrap justify-between gap-3 mb-3">
                 <div><h2 className="font-mono font-semibold">{order.id}</h2><p className="text-xs text-muted">{new Date(order.createdAt).toLocaleString()}</p></div>
-                <span className={`h-fit text-xs px-3 py-1 rounded-full ${order.status === 'pending' ? 'bg-accent/10 text-accent' : order.status === 'approved' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>{order.status}</span>
+                <span className={`h-fit text-xs px-3 py-1 rounded-full ${order.status === 'pending' ? 'bg-accent/10 text-accent' : order.status === 'approved' ? 'bg-primary/10 text-primary' : order.status === 'delivered' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>{order.status}</span>
               </div>
+              {order.status === 'delivered' && <div role="status" className="mb-3 rounded-lg bg-success/10 p-3 text-sm font-medium text-success">Delivery process is done</div>}
               <div className="space-y-2 border-y border-border py-3">
                 {Object.values(order.items.reduce<Record<string, { product: Order['items'][number]; quantity: number }>>((grouped, product) => {
                   grouped[product.id] = grouped[product.id] ? { product, quantity: grouped[product.id].quantity + 1 } : { product, quantity: 1 };
