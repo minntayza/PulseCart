@@ -8,12 +8,14 @@ import FeedbackPanel from '@/components/dashboard/FeedbackPanel';
 import AgentPanel from '@/components/dashboard/AgentPanel';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
+import ProductAdminPanel from '@/components/dashboard/ProductAdminPanel';
 
 const tabs = [
   { id: 'orders', label: '📋 Orders', icon: '📋' },
   { id: 'market', label: '📊 Market Insights', icon: '📊' },
   { id: 'feedback', label: '💬 Feedback', icon: '💬' },
   { id: 'agents', label: '🤖 Agent Activity', icon: '🤖' },
+  { id: 'products', label: 'Products', icon: '📦' },
 ];
 
 export default function ManagerDashboard() {
@@ -63,6 +65,7 @@ export default function ManagerDashboard() {
           {activeTab === 'market' && <MarketPanel />}
           {activeTab === 'feedback' && <FeedbackPanel />}
           {activeTab === 'agents' && <AgentPanel />}
+          {activeTab === 'products' && <ProductAdminPanel />}
         </div>
       </div>
     </div>

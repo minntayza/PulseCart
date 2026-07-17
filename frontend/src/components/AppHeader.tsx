@@ -11,7 +11,7 @@ export default function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const navLink = (active: boolean) => `rounded-lg px-3 py-2 text-sm font-medium transition ${active ? 'bg-primary-light text-primary' : 'text-text-secondary hover:bg-surface-alt hover:text-foreground'}`;
-  const signOut = () => { logout(); router.push('/'); };
+  const signOut = async () => { await logout(); router.push('/'); };
   return <header className="sticky top-0 z-50 border-b border-border/80 bg-surface/90 backdrop-blur-xl"><div className="mx-auto flex min-h-16 max-w-7xl flex-wrap items-center gap-3 px-4 py-2 sm:px-6 lg:px-8">
     <Link href="/" className="mr-2 flex items-center gap-2.5" aria-label="PulseCart home"><span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-primary to-agent font-black text-white shadow-sm">P</span><span className="text-lg font-extrabold tracking-[-0.03em] text-foreground">PulseCart</span></Link>
     <nav className="order-3 flex w-full items-center gap-1 sm:order-none sm:w-auto"><Link href="/" className={navLink(pathname === '/')}>Shop</Link>{user?.role === 'customer' && <Link href="/account/orders" className={navLink(pathname.startsWith('/account'))}>My orders</Link>}{user?.role === 'manager' && <Link href="/manager" className={navLink(pathname === '/manager')}>Dashboard</Link>}</nav>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { products } from '@/data/products';
 import { Product } from '@/types';
 import { searchProducts } from '@/services/searchService';
+import { getProducts } from '@/services/productService';
 import { clearCart, readCart, writeCart } from '@/services/storage';
 import Sidebar from '@/components/Sidebar';
 import ProductGrid from '@/components/ProductGrid';
@@ -17,8 +18,22 @@ export default function Home() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [rankedProducts, setRankedProducts] = useState(products);
   const [isSearching, setIsSearching] = useState(false);
+  const [catalogError, setCatalogError] = useState('');
 
   // Listen for checkout open from nav
+  useEffect(() => {
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      try {
+        const liveProducts = await getProducts();
+        if (active) { setRankedProducts(liveProducts); setCatalogError(''); }
+      } catch {
+        if (active) setCatalogError('Live products could not be loaded. Make sure FastAPI is running on port 8000.');
+      }
+    }, 0);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, []);
+
   useEffect(() => {
     const handler = () => setIsCheckoutOpen(true);
     const shouldOpen = window.sessionStorage.getItem('pulsecart:open-cart');
@@ -54,11 +69,12 @@ export default function Home() {
   useEffect(() => {
     let active = true;
     const timer = window.setTimeout(async () => {
-      const result = await searchProducts(searchQuery);
-      if (active) {
-        setRankedProducts(result.products);
-        setIsSearching(false);
-      }
+      try {
+        const result = await searchProducts(searchQuery);
+        if (active) { setRankedProducts(result.products); setCatalogError(''); }
+      } catch {
+        if (active) setCatalogError('Search is temporarily unavailable.');
+      } finally { if (active) setIsSearching(false); }
     }, searchQuery ? 250 : 0);
     return () => {
       active = false;
@@ -100,6 +116,7 @@ export default function Home() {
       </section>
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {catalogError && <div className="mb-5 rounded-2xl border border-danger/20 bg-danger-light px-4 py-3 text-sm text-danger" role="alert">{catalogError}</div>}
         <Sidebar selectedCategory={category} onCategoryChange={setCategory} />
 
       <ProductGrid
