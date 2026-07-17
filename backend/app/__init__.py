@@ -1,1 +1,0 @@
-"""PulseCart FastAPI application."""

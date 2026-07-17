@@ -3,14 +3,12 @@
 > 3-Day Hackathon | Start: 2026-07-16 | End: 2026-07-18
 > Positioning: "Agentic Commerce Operations Copilot"
 > Core Value: Agents that observe → reason → act → report, with human approval on risky actions
-> **Status:** Phase 1 (Frontend) ✅ Complete | Phase 2 (Backend) 🔲 Not started
 
 ---
 
-## Phase 1: Foundation + Working Vertical Slice (Day 1 — July 16) ✅
+## Phase 1: Foundation + Working Vertical Slice (Day 1 — July 16)
 
 **Goal:** Search → personalized feed + Checkout → approval queue — both live end-to-end.
-**Status:** ✅ Complete — all frontend flows working with mock data.
 
 ### Morning (9:00–12:00) — Value prop lock + UI shell
 
@@ -46,7 +44,7 @@
 | PM-01 | Manager approval queue UI (list + approve/reject) | Frontend |
 | UI-03 | Approval queue wired to order status updates | Frontend |
 
-**Day 1 checkpoint:** ✅ Git commit. E2E: search "gaming laptop" → feed changes → checkout → enters queue.
+**Day 1 checkpoint:** Git commit. Backup demo video. E2E: search "gaming laptop" → feed changes → checkout → enters queue.
 
 ---
 

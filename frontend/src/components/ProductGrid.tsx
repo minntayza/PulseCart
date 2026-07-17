@@ -1,43 +1,74 @@
 'use client';
 
-import { useState } from 'react';
 import { Product } from '@/types';
 import ProductCard from './ProductCard';
-import { ProductCardSkeleton } from './Skeleton';
 
-interface ProductGridProps { products: Product[]; searchQuery: string; isLoading?: boolean; onAddToCart: (product: Product) => void }
-type SortOption = 'relevance' | 'price-low' | 'price-high' | 'rating';
+interface ProductGridProps {
+  products: Product[];
+  searchQuery: string;
+  onAddToCart: (product: Product) => void;
+}
 
-export default function ProductGrid({ products, searchQuery, isLoading = false, onAddToCart }: ProductGridProps) {
-  const [sortBy, setSortBy] = useState<SortOption>('relevance');
-  const sortedProducts = [...products].sort((a, b) => {
-    if (sortBy === 'price-low') return a.price - b.price;
-    if (sortBy === 'price-high') return b.price - a.price;
-    if (sortBy === 'rating') return b.rating - a.rating;
-    return 0;
+export default function ProductGrid({ products, searchQuery, onAddToCart }: ProductGridProps) {
+  const filtered = products.filter((p) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      p.name.toLowerCase().includes(q) ||
+      p.description.toLowerCase().includes(q) ||
+      p.category.toLowerCase().includes(q)
+    );
   });
 
   return (
-    <section className="mt-8">
-      <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+    <div className="flex-1 p-6 overflow-y-auto h-[calc(100vh-56px)]">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Curated collection</p>
-          <h2 className="mt-1 text-2xl font-extrabold tracking-tight text-foreground">{searchQuery ? `Top matches for “${searchQuery}”` : 'Products picked for you'}</h2>
-          <p className="mt-1 text-sm text-text-secondary">{products.length} products · transparent, explainable ranking</p>
+          <h1 className="text-2xl font-bold text-text">
+            {searchQuery ? `Results for "${searchQuery}"` : 'All Products'}
+          </h1>
+          <p className="text-sm text-muted mt-1">
+            {filtered.length} product{filtered.length !== 1 ? 's' : ''} found
+            {searchQuery && ' · Sorted by relevance'}
+          </p>
         </div>
-        <label className="flex items-center gap-2 text-sm text-text-secondary">
-          Sort
-          <select value={sortBy} onChange={(event) => setSortBy(event.target.value as SortOption)} className="rounded-xl border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10">
-            <option value="relevance">Relevance</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="rating">Highest rated</option>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted">Sort by:</span>
+          <select className="text-xs bg-white/5 border border-border rounded-lg px-2 py-1.5 text-text">
+            <option>Relevance</option>
+            <option>Price: Low to High</option>
+            <option>Price: High to Low</option>
+            <option>Rating</option>
           </select>
-        </label>
+        </div>
       </div>
 
-      {searchQuery && <div className="mb-5 flex items-center gap-3 rounded-2xl border border-agent/15 bg-agent-light px-4 py-3 text-sm text-text-secondary"><span className="rounded-lg bg-agent px-2 py-1 text-[10px] font-bold text-white">AI</span><span><strong className="text-foreground">Feed updated.</strong> Relevant matches moved first; no sensitive traits were used.</span></div>}
+      {/* Agent insight banner when searching */}
+      {searchQuery && (
+        <div className="bg-agent/5 border border-agent/20 rounded-lg p-3 mb-6 flex items-center gap-3">
+          <span className="text-agent animate-pulse">🤖</span>
+          <p className="text-xs text-text/80">
+            <span className="font-semibold text-agent">Recommender Agent:</span>{' '}
+            Re-ranked results based on your profile. Items marked with 🎯 are personalized matches.
+          </p>
+        </div>
+      )}
 
-      {isLoading ? <div aria-label="Loading products" className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }, (_, index) => <ProductCardSkeleton key={index}/>)}</div>
-      : !products.length ? <div className="grid min-h-64 place-items-center rounded-3xl border border-dashed border-border bg-surface"><div className="text-center"><p className="text-lg font-bold">No products found</p><p className="mt-1 text-sm text-text-secondary">Try another category or a broader search.</p></div></div>
-      : <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">{sortedProducts.map((product) => <ProductCard key={product.id} product={product} onAddToCart={onAddToCart} />)}</div>}
-    </section>
+      {/* Grid */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-16">
+          <span className="text-4xl mb-4 block">🔍</span>
+          <h3 className="text-lg font-semibold text-text mb-2">No products found</h3>
+          <p className="text-sm text-muted">Try adjusting your search or category filter</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((product) => (
+            <ProductCard key={product.id} product={product} onAddToCart={onAddToCart} />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

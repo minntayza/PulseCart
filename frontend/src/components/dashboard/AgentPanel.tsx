@@ -1,27 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { agentTraces as fixtureTraces } from '@/data/agents';
-import { AgentTrace } from '@/types';
-import { pulseCartEvents, readTraces } from '@/services/storage';
+import { agentTraces } from '@/data/agents';
 
 export default function AgentPanel() {
-  const [agentTraces, setAgentTraces] = useState<AgentTrace[]>(fixtureTraces);
-  const loadTraces = useCallback(() => {
-    const liveTraces = readTraces();
-    setAgentTraces(liveTraces.length ? liveTraces : fixtureTraces);
-  }, []);
-
-  useEffect(() => {
-    const initialLoad = window.setTimeout(loadTraces, 0);
-    window.addEventListener(pulseCartEvents.tracesChanged, loadTraces);
-    window.addEventListener('storage', loadTraces);
-    return () => {
-      window.clearTimeout(initialLoad);
-      window.removeEventListener(pulseCartEvents.tracesChanged, loadTraces);
-      window.removeEventListener('storage', loadTraces);
-    };
-  }, [loadTraces]);
   const statusColors = {
     active: 'bg-success',
     idle: 'bg-muted',

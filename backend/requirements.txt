@@ -1,7 +1,0 @@
-fastapi>=0.115,<1
-uvicorn[standard]>=0.34,<1
-pydantic-settings>=2.7,<3
-supabase>=2.13,<3
-httpx>=0.28,<1
-pytest>=8,<9
-python-multipart>=0.0.20,<1

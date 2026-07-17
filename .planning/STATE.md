@@ -1,47 +1,27 @@
 # State: PulseCart
 
-> Last updated: 2026-07-17T00:00:00
+> Last updated: 2026-07-16T12:00:00
 
-## Current Phase: Phase 2 — Backend + Real Agents
+## Current Phase: Phase 1 — Foundation + Working Vertical Slice
 
 **Status:** NOT STARTED
-**Target:** TBD
+**Target:** 2026-07-16 (Day 1)
 
-## Phase 1: Foundation + Working Vertical Slice
+## Completed
 
-**Status:** ✅ COMPLETE (2026-07-16)
+None yet.
 
-### Completed
-- Next.js 16 + Tailwind CSS 4 frontend fully built
-- 14 components: AppHeader, SearchInput, ProductGrid, ProductCard, CheckoutModal, AgentFeed, Sidebar, AuthProvider, ThemeToggle, NavCartButton, Skeleton, AuthCard, LoginForm, ProductDetailActions
-- 5 manager dashboard panels: OrdersPanel, MarketPanel, FeedbackPanel, AgentPanel, StatsRow
-- 6 pages: /, /login, /register, /products/[id], /account/orders, /manager
-- 4 services: authService, searchService, orderService, storage
-- 5 data fixtures: products (12), productDetails, competitors (5), feedback (10), agents (4 traces + activity)
-- Dark/light theme system with CSS variables
-- Responsive design with skeleton loading states
-- Auth system with demo accounts (manager + customer)
-- Cart management with localStorage persistence
-- Checkout flow with validation and order creation
-- Manager dashboard with 4 tabbed panels
-- Agent trace visualization
+## Blocked
 
-### Not started (Phase 2)
-- FastAPI backend
-- CrewAI agent orchestration
-- Supabase database + auth
-- pgvector embeddings
-- Real-time agent collaboration
-- Server-side guardrails
-- Audit trail database logging
+None.
 
 ## Next Actions
 
-1. Initialize FastAPI project structure
+1. Lock demo scenario + data fixtures
 2. Set up Supabase project + schema
-3. Implement CrewAI agents with tools
-4. Wire frontend to real backend API
-5. Add pgvector for personalized recommendations
+3. Build Next.js app shell
+4. Implement search → profile → feed pipeline
+5. Implement checkout → order → approval queue
 
 ## Decisions Made
 
@@ -50,9 +30,8 @@
 | Agent framework | CrewAI | Faster prototyping for hackathon |
 | Database | Supabase | Auth + DB + pgvector in one |
 | Demo data | Hybrid (fixtures + controlled JSON) | Reliable demo + some real signals |
-| Auth | Mock (sessionStorage demo accounts) | MVP scope, frontend-only for Phase 1 |
+| Auth | Hardcoded demo user | MVP scope, no real auth needed |
 | LLM integration | Optional, deterministic fallback | Demo must not depend on API uptime |
-| Phase 1 scope | Frontend-only with mock services | Prove UX before backend investment |
 
 ## Risk Log
 

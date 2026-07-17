@@ -5,16 +5,16 @@ import { AgentActivity } from '@/types';
 import { recentActivity } from '@/data/agents';
 
 export default function AgentFeed() {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   if (isMinimized) {
     return (
       <button
         onClick={() => setIsMinimized(false)}
-        className="fixed bottom-5 right-5 z-40 flex h-12 items-center gap-2 rounded-full bg-primary px-4 text-xs font-semibold text-white shadow-xl transition hover:-translate-y-0.5 hover:bg-primary-hover"
+        className="fixed bottom-4 right-4 z-40 w-12 h-12 bg-agent rounded-full flex items-center justify-center shadow-lg hover:bg-agent/90 transition-colors animate-pulse"
       >
-        <span className="rounded bg-agent px-1.5 py-0.5 text-[9px] font-black">AI</span> Activity
+        <span className="text-white text-lg">🤖</span>
       </button>
     );
   }
