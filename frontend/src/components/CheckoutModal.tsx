@@ -15,7 +15,7 @@ interface CheckoutModalProps {
 }
 
 export default function CheckoutModal({ isOpen, onClose, cart, onRemoveFromCart, onOrderCompleted }: CheckoutModalProps) {
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
   const router = useRouter();
   const [step, setStep] = useState<'cart' | 'delivery' | 'confirm'>('cart');
   const [customerName, setCustomerName] = useState('');
@@ -44,14 +44,14 @@ export default function CheckoutModal({ isOpen, onClose, cart, onRemoveFromCart,
     setError('');
     setIsSubmitting(true);
     try {
-      if (!user) throw new Error('Authentication required');
-      const order = await createOrder({ userId: user.id, customerName, address, phone, items: cart });
+      if (!user || !accessToken) throw new Error('Authentication required');
+      const order = await createOrder({ userId: user.id, customerName, address, phone, items: cart }, accessToken);
       setOrderId(order.id);
       setSubmittedTotal(order.total);
       onOrderCompleted();
       setStep('confirm');
-    } catch {
-      setError('The order could not be created. Please try again.');
+    } catch (submissionError) {
+      setError(submissionError instanceof Error ? submissionError.message : 'The order could not be created. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
