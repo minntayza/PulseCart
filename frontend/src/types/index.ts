@@ -12,12 +12,39 @@ export interface Product {
 
 export interface Order {
   id: string;
+  userId: string;
   customerName: string;
-  productName: string;
-  productImage: string;
+  items: Product[];
+  address: string;
+  phone: string;
   total: number;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
+}
+
+export interface ProductSpecification { label: string; value: string; explanation?: string }
+export interface ProductDetails {
+  overview: string;
+  howItWorks: string;
+  bestFor: string[];
+  limitations: string[];
+  specifications: ProductSpecification[];
+  stock: number;
+  deliveryEstimate: string;
+  warranty: string;
+}
+
+export interface CheckoutInput {
+  userId: string;
+  customerName: string;
+  address: string;
+  phone: string;
+  items: Product[];
+}
+
+export interface SearchResult {
+  products: Product[];
+  trace: AgentTrace;
 }
 
 export interface CompetitorPrice {
@@ -71,4 +98,11 @@ export interface UserProfile {
   id: string;
   name: string;
   interests: Record<string, number>;
+}
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  email: string;
+  role: 'customer' | 'manager';
 }
