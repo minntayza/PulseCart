@@ -104,14 +104,23 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-[calc(100vh-64px)]">
-      <section className="hero-grid border-b border-border/70">
-        <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
-          <div className="max-w-3xl">
-            <span className="inline-flex rounded-full border border-primary/15 bg-primary-light px-3 py-1 text-xs font-bold text-primary">AI-assisted commerce, with you in control</span>
-            <h1 className="mt-4 text-3xl font-black tracking-[-0.04em] text-foreground sm:mt-5 sm:text-4xl lg:text-5xl xl:text-6xl">Find better products.<br/><span className="text-gradient">Understand every choice.</span></h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-text-secondary sm:mt-5 sm:text-base lg:text-lg">Search a smarter storefront that adapts in real time, explains its recommendations, and keeps people in charge of important decisions.</p>
+    <main className="min-h-[calc(100vh-64px)] bg-background relative overflow-hidden">
+      {/* Subtle Background Pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,color-mix(in_srgb,var(--primary)_10%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_srgb,var(--primary)_10%,transparent)_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
+      
+      <section className="relative pt-16 pb-12 sm:pt-24 sm:pb-16 lg:pt-32 lg:pb-24 border-b border-border/60 bg-surface/40 backdrop-blur-3xl">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-light/50 px-4 py-1.5 text-xs font-semibold text-primary shadow-sm backdrop-blur-md transition-all hover:bg-primary-light cursor-default">
+            <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+            AI-assisted commerce, with you in control
           </div>
+          <h1 className="mt-8 max-w-4xl text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl lg:leading-tight">
+            Find better products. <br className="hidden sm:block" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-agent">Understand every choice.</span>
+          </h1>
+          <p className="mt-6 max-w-2xl text-base leading-relaxed text-text-secondary sm:text-lg">
+            Search a smarter storefront that adapts in real time, explains its recommendations, and keeps people in charge of important decisions.
+          </p>
         </div>
       </section>
 
