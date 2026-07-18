@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from .fixtures import PRODUCTS
 from .models.schemas import AgentTrace, AuthUser, CreateFeedbackRequest, CreateOrderRequest, Feedback, FeedbackInsights, Order, OrderItem, Product, UpdateOrderStatusRequest
 from .config import get_settings
+from .agents.feedback_agent import classify_feedback_theme
 
 
 class MemoryRepository:
@@ -155,7 +156,11 @@ class MemoryRepository:
             self.email_outbox[outbox_id].update({"status": "failed", "error_message": error[:500], "attempts": 1})
 
     def create_feedback(self, user_id: str, payload: CreateFeedbackRequest) -> Feedback:
-        feedback = Feedback(id=f"FDB-{uuid4().hex[:8].upper()}", userId=user_id, message=payload.message.strip())
+        message = payload.message.strip()
+        feedback = Feedback(
+            id=f"FDB-{uuid4().hex[:8].upper()}", userId=user_id,
+            message=message, theme=classify_feedback_theme(message),
+        )
         with self._lock:
             self.feedback.insert(0, feedback)
         return feedback
@@ -342,7 +347,11 @@ class SupabaseRepository:
         }).eq("id", outbox_id).execute()
 
     def create_feedback(self, user_id: str, payload: CreateFeedbackRequest) -> Feedback:
-        response = self.client.table("feedback").insert({"user_id": user_id, "message": payload.message.strip()}).execute()
+        message = payload.message.strip()
+        response = self.client.table("feedback").insert({
+            "user_id": user_id, "message": message,
+            "theme": classify_feedback_theme(message),
+        }).execute()
         row = response.data[0]
         return Feedback(id=str(row["id"]), userId=row["user_id"], message=row["message"], theme=row["theme"], severity=row["severity"], createdAt=row["created_at"])
 

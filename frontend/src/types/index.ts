@@ -74,7 +74,7 @@ export interface FeedbackMessage {
   userId: string;
   message: string;
   theme: 'delivery' | 'pricing' | 'quality' | 'service' | 'other';
-  severity: 'low' | 'medium' | 'high';
+  severity?: 'low' | 'medium' | 'high';
   createdAt: string;
 }
 

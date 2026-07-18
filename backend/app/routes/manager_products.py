@@ -67,7 +67,9 @@ async def upload_image_if_provided(repo, image, category, product_id):
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Product image upload failed: {str(exc)[:300]}") from exc
         
-    image_url = bucket.get_public_url(object_path)
+    # Updates overwrite the same object path. Version the URL so browsers do
+    # not keep displaying the previous image for the storage cache lifetime.
+    image_url = f"{bucket.get_public_url(object_path)}?v={uuid4().hex}"
     return object_path, image_url
 
 

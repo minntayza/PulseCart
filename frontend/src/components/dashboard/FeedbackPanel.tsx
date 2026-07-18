@@ -16,8 +16,10 @@ export default function FeedbackPanel() {
   const loading = accessToken ? !hasLoaded : false;
 
   useEffect(() => {
-    if (!accessToken) return;
-    let cancelled = false;
+    if (!accessToken) {
+      const timer = window.setTimeout(() => setLoading(false), 0);
+      return () => window.clearTimeout(timer);
+    }
     Promise.all([getInsights(accessToken), getFeedback(accessToken)])
       .then(([ins, msgs]) => {
         if (!cancelled) {
@@ -66,11 +68,15 @@ export default function FeedbackPanel() {
     service: ['service', 'support', 'staff', 'rude'],
   };
 
-  const matchTheme = (message: string, theme: string): boolean => {
-    const lower = message.toLowerCase();
+  const matchTheme = (feedback: FeedbackMessage, theme: string): boolean => {
+    const lower = feedback.message.toLowerCase();
     const keywords = themeKeywords[theme];
-    if (!keywords) return false;
-    return keywords.some(k => lower.includes(k));
+    if (keywords) return keywords.some(k => lower.includes(k));
+    if (theme !== 'other') return feedback.theme === theme;
+    const matchesKnownTheme = Object.values(themeKeywords).some(words =>
+      words.some(keyword => lower.includes(keyword)),
+    );
+    return feedback.theme === 'other' && !matchesKnownTheme;
   };
 
   return (
@@ -93,7 +99,7 @@ export default function FeedbackPanel() {
           <div className="space-y-2">
             {insights.themes.map((theme, i) => {
               const isSelected = selectedTheme === theme.theme;
-              const matchingMessages = messages.filter(m => matchTheme(m.message, theme.theme));
+              const matchingMessages = messages.filter(message => matchTheme(message, theme.theme));
               return (
                 <div key={i}>
                   <button
@@ -107,7 +113,7 @@ export default function FeedbackPanel() {
                     <div className="flex items-center justify-between mb-1.5">
                       <div className="flex items-center gap-2">
                         <span className="text-base">{themeIcons[theme.theme] || '📝'}</span>
-                        <span className="text-sm font-medium text-foreground capitalize">{theme.theme}</span>
+                        <span className="text-sm font-medium text-text capitalize">{theme.theme === 'other' ? 'Others' : theme.theme}</span>
                         <span className="text-xs text-text-secondary">({theme.messageCount} mentions)</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -156,11 +162,7 @@ export default function FeedbackPanel() {
           <div className="space-y-2">
             {messages.slice(0, 10).map((msg) => (
               <div key={msg.id} className="p-3 bg-surface-alt rounded-lg border border-border-light">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-white/10 text-text-secondary capitalize">{msg.theme}</span>
-                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${severityColors[msg.severity]}`}>{msg.severity}</span>
-                  <span className="text-[11px] text-text-muted ml-auto">{new Date(msg.createdAt).toLocaleDateString()}</span>
-                </div>
+                <div className="mb-1.5 text-right text-[11px] text-text-muted">{new Date(msg.createdAt).toLocaleDateString()}</div>
                 <p className="text-sm text-text-secondary leading-relaxed">{msg.message}</p>
               </div>
             ))}
