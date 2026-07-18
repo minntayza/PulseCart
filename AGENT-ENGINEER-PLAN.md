@@ -19,7 +19,7 @@ This plan covers setting up the CrewAI agent framework and defining the first tw
 Before starting, confirm these are ready (or unblock with Backend Lead):
 
 | Dependency | Owner | Status |
-|-----------|-------|--------|
+| ----------- | ------- | -------- |
 | FastAPI project initialized (`backend/app/main.py`) | Backend Lead | 🔲 |
 | Supabase project created + tables created | Data/Infra Lead | 🔲 |
 | `backend/.env` with `SUPABASE_URL`, `SUPABASE_KEY`, `OPENAI_API_KEY` | Data/Infra Lead | 🔲 |
@@ -32,10 +32,11 @@ Before starting, confirm these are ready (or unblock with Backend Lead):
 
 **Goal:** CrewAI installed, project scaffolded, agent directory ready.
 
-### Steps
+### Task 1 Steps
 
 1. **Create agent directory structure:**
-   ```
+
+   ```text
    backend/
    ├── app/
    │   ├── agents/
@@ -53,7 +54,8 @@ Before starting, confirm these are ready (or unblock with Backend Lead):
    ```
 
 2. **Add CrewAI dependencies to `requirements.txt`:**
-   ```
+
+   ```text
    crewai[tools]
    supabase
    fastapi
@@ -63,6 +65,7 @@ Before starting, confirm these are ready (or unblock with Backend Lead):
    ```
 
 3. **Create `app/config.py`:**
+
    ```python
    import os
    from dotenv import load_dotenv
@@ -75,12 +78,14 @@ Before starting, confirm these are ready (or unblock with Backend Lead):
    ```
 
 4. **Create `app/agents/orchestrator.py`:**
+
    - Simple orchestrator that instantiates agents and routes events
    - `run_recommender(query: str, user_id: str) -> dict`
    - `run_order_coordinator(order_data: dict) -> dict`
    - Logs every agent action to `audit_log` table via Supabase client
 
-### Definition of Done
+### Task 1 Definition of Done
+
 - [ ] `crewai` imports work without errors
 - [ ] Agent files exist and are importable
 - [ ] Orchestrator can be called from a FastAPI route
@@ -95,14 +100,14 @@ Before starting, confirm these are ready (or unblock with Backend Lead):
 ### Agent Contract
 
 | Field | Value |
-|-------|-------|
+| ------- | ------- |
 | **Trigger** | Customer searches or views a product |
 | **Input** | Search query + user profile (affinity scores) |
 | **Action** | Update affinity scores, re-rank products by relevance |
 | **Output** | Ordered list of product IDs with scores |
 | **Guardrail** | No sensitive trait tracking (age, gender, income, etc.) |
 
-### Steps
+### Task 2 Steps
 
 1. **Create `app/tools/search_tools.py`:**
 
@@ -173,14 +178,17 @@ Before starting, confirm these are ready (or unblock with Backend Lead):
    ```
 
 3. **Guardrail: sensitive trait filter:**
+
    - Scan query for blocked categories: `age`, `gender`, `income`, `race`, `religion`, `health`, `location`
    - If detected, log a warning and skip the query for personalization
    - Fall back to default trending products
 
 4. **Wire to FastAPI route (coordinate with Backend Lead):**
+
    - `POST /api/recommend` — receives `{ query, user_id }`, returns `{ ranked_products, profile }`
 
-### Definition of Done
+### Task 2 Definition of Done
+
 - [ ] `update_affinity_scores()` correctly boosts matching categories
 - [ ] `re_rank_products()` sorts by combined score
 - [ ] Cold start handled (new user gets default profile)
@@ -197,14 +205,14 @@ Before starting, confirm these are ready (or unblock with Backend Lead):
 ### Agent Contract
 
 | Field | Value |
-|-------|-------|
+| ------- | ------- |
 | **Trigger** | Customer submits checkout |
 | **Input** | Product ID, address, phone number, user ID |
 | **Action** | Validate data format, check completeness, create order |
 | **Output** | Pending order in approval queue |
 | **Guardrail** | Order stays `pending` until manager approves — never auto-confirm |
 
-### Steps
+### Task 3 Steps
 
 1. **Create `app/tools/order_tools.py`:**
 
@@ -278,17 +286,20 @@ Before starting, confirm these are ready (or unblock with Backend Lead):
    ```
 
 3. **Guardrail: manager approval required:**
+
    - Order is created with `status='pending'` — never `'confirmed'`
    - `confirm_order()` function exists but is ONLY callable by manager role
    - Frontend approval button calls `POST /api/orders/{id}/approve`
    - If any validation fails, return structured error with specific field messages
 
 4. **Wire to FastAPI route (coordinate with Backend Lead):**
+
    - `POST /api/orders` — receives checkout data, returns `{ order, status }`
    - `POST /api/orders/{id}/approve` — manager-only, sets status to `approved`
    - `POST /api/orders/{id}/reject` — manager-only, sets status to `rejected`
 
-### Definition of Done
+### Task 3 Definition of Done
+
 - [ ] Address validation catches empty/invalid addresses
 - [ ] Phone validation catches non-phone strings
 - [ ] Duplicate order prevention works
@@ -302,9 +313,10 @@ Before starting, confirm these are ready (or unblock with Backend Lead):
 
 **Goal:** Every agent action is logged to the `audit_log` table.
 
-### Steps
+### Task 4 Steps
 
 1. **Create shared audit helper:**
+
    ```python
    # app/tools/audit.py
    def log_agent_action(agent_name: str, action: str, input_data: dict, output_data: dict):
@@ -323,7 +335,8 @@ Before starting, confirm these are ready (or unblock with Backend Lead):
 
 2. **Call `log_agent_action()` at the end of every `run_*` function**
 
-### Definition of Done
+### Task 4 Definition of Done
+
 - [ ] Every `run_recommender()` call writes an audit log entry
 - [ ] Every `run_order_coordinator()` call writes an audit log entry
 - [ ] Audit entries include: agent name, action type, input JSON, output JSON, timestamp
@@ -332,7 +345,7 @@ Before starting, confirm these are ready (or unblock with Backend Lead):
 
 ## Implementation Order
 
-```
+```text
 1. Task 1: CrewAI project structure    (1-2 hours)
    └── Depends on: Backend Lead init
 2. Task 4: Audit logging helper        (30 min)
@@ -350,7 +363,7 @@ Before starting, confirm these are ready (or unblock with Backend Lead):
 ## Integration Points
 
 | Who | What they need from you | What you need from them |
-|-----|------------------------|------------------------|
+| ----- | ------------------------ | ------------------------ |
 | **Backend Lead** | Agent route handlers to mount in FastAPI | FastAPI app init, Supabase client setup |
 | **Frontend Lead** | Agent trace data shape (input → decision → action → output) | API endpoint contracts for `/api/recommend`, `/api/orders` |
 | **Data/Infra Lead** | Supabase table schemas match agent expectations | Seeded product/order/feedback data |
