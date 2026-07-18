@@ -84,6 +84,8 @@ class MemoryRepository:
         total = Decimal("0")
         for requested in payload.items:
             product = self.get_product(requested.productId)
+            if product.stock < requested.quantity:
+                raise HTTPException(status_code=409, detail=f"Insufficient stock for {product.name}: {product.stock} available, {requested.quantity} requested")
             line_total = product.price * requested.quantity
             total += line_total
             lines.append(OrderItem(product=product, quantity=requested.quantity, lineTotal=line_total))
@@ -108,6 +110,18 @@ class MemoryRepository:
         with self._lock:
             for index, order in enumerate(self.orders):
                 if order.id == order_id:
+                    # Decrement stock when approving
+                    if payload.status == "approved" and order.status == "pending":
+                        for item in order.items:
+                            product = next((p for p in self.products if p.id == item.product.id), None)
+                            if product and product.stock >= item.quantity:
+                                product.stock -= item.quantity
+                    # Restore stock when rejecting (if was approved)
+                    elif payload.status == "rejected" and order.status == "approved":
+                        for item in order.items:
+                            product = next((p for p in self.products if p.id == item.product.id), None)
+                            if product:
+                                product.stock += item.quantity
                     updated = order.model_copy(update={"status": payload.status})
                     self.orders[index] = updated
                     return updated
@@ -303,6 +317,8 @@ class SupabaseRepository:
         total = Decimal("0")
         for requested in payload.items:
             product = self.get_product(requested.productId)
+            if product.stock < requested.quantity:
+                raise HTTPException(status_code=409, detail=f"Insufficient stock for {product.name}: {product.stock} available, {requested.quantity} requested")
             line_total = product.price * requested.quantity
             total += line_total
             lines.append(OrderItem(product=product, quantity=requested.quantity, lineTotal=line_total))
@@ -340,9 +356,27 @@ class SupabaseRepository:
         return self._orders()
 
     def update_order(self, order_id: str, payload: UpdateOrderStatusRequest) -> Order:
-        response = self.client.table("orders").update({"status": payload.status}).eq("id", order_id).execute()
-        if not response.data:
+        # Get order items before updating
+        existing = self._orders(order_id=order_id)
+        if not existing:
             raise HTTPException(status_code=404, detail="Order not found")
+        order = existing[0]
+        # Decrement stock when approving
+        if payload.status == "approved" and order.status == "pending":
+            for item in order.items:
+                resp = self.client.table("products").select("stock").eq("id", item.product.id).execute()
+                if resp.data:
+                    current_stock = resp.data[0]["stock"]
+                    new_stock = max(0, current_stock - item.quantity)
+                    self.client.table("products").update({"stock": new_stock}).eq("id", item.product.id).execute()
+        # Restore stock when rejecting (if was approved)
+        elif payload.status == "rejected" and order.status == "approved":
+            for item in order.items:
+                resp = self.client.table("products").select("stock").eq("id", item.product.id).execute()
+                if resp.data:
+                    current_stock = resp.data[0]["stock"]
+                    self.client.table("products").update({"stock": current_stock + item.quantity}).eq("id", item.product.id).execute()
+        response = self.client.table("orders").update({"status": payload.status}).eq("id", order_id).execute()
         orders = self._orders(order_id=order_id)
         return orders[0]
 

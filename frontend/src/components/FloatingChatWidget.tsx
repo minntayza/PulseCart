@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthProvider';
 import { usePathname } from 'next/navigation';
 import ChatPanel from './ChatPanel';
@@ -15,9 +15,18 @@ export default function FloatingChatWidget() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Array<{id: string; text: string; isUser: boolean}>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const hasAutoOpened = useRef(false);
 
-  // Hide on manager pages
-  if (pathname.startsWith('/manager')) return null;
+  // Auto-open chat when user logs in (not on page reload)
+  useEffect(() => {
+    if (accessToken && !hasAutoOpened.current) {
+      hasAutoOpened.current = true;
+      setIsOpen(true);
+    }
+  }, [accessToken]);
+
+  // Hide on auth and manager pages
+  if (pathname.startsWith('/manager') || pathname === '/login' || pathname === '/register') return null;
 
   const handleFeedbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

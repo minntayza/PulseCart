@@ -74,12 +74,19 @@ def send_message(
 
     # Upsert wanted product if detected
     if chat_response.wantedProduct:
-        repo.upsert_wanted_product(
-            user.id,
-            chat_response.wantedProduct["name"],
-            chat_response.wantedProduct.get("description"),
-            conversation_id,
-        )
+        print(f"[CHAT] Saving wanted product: {chat_response.wantedProduct}")
+        try:
+            result = repo.upsert_wanted_product(
+                user.id,
+                chat_response.wantedProduct["name"],
+                chat_response.wantedProduct.get("description"),
+                conversation_id,
+            )
+            print(f"[CHAT] Wanted product saved: {result}")
+        except Exception as e:
+            print(f"[CHAT] Failed to save wanted product: {e}")
+            import traceback
+            traceback.print_exc()
 
     # Fetch full product details for the returned IDs
     product_map = {p.id: p for p in products}

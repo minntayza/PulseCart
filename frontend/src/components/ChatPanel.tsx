@@ -8,7 +8,7 @@ import {
   getMessages,
   sendMessage,
 } from '@/services/chatService';
-import type { ChatConversation, ChatMessage, Product } from '@/types';
+import type { ChatMessage, Product } from '@/types';
 import { formatPrice } from '@/types';
 
 const QUICK_ACTIONS = [
@@ -18,69 +18,60 @@ const QUICK_ACTIONS = [
   '💰 Budget accessories',
 ];
 
-type ViewState =
-  | { mode: 'list' }
-  | { mode: 'chat'; conversationId: string; messages: (ChatMessage & { products?: Product[] })[] }
-  | { mode: 'loading' };
-
 export default function ChatPanel({ onClose }: { onClose?: () => void }) {
-  const { accessToken } = useAuth();
-  const [conversations, setConversations] = useState<ChatConversation[]>([]);
-  const [view, setView] = useState<ViewState>({ mode: 'list' });
+  const { accessToken, user } = useAuth();
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<(ChatMessage & { products?: Product[] })[]>([]);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const initialized = useRef(false);
 
-  // Load conversations on mount
+  // Load or create single conversation on mount
   useEffect(() => {
-    if (!accessToken) return;
-    listConversations(accessToken)
-      .then(setConversations)
-      .catch(() => {});
+    if (!accessToken || initialized.current) return;
+    initialized.current = true;
+
+    (async () => {
+      try {
+        const convs = await listConversations(accessToken);
+        if (convs.length > 0) {
+          // Use existing conversation
+          const conv = convs[0];
+          setConversationId(conv.id);
+          const msgs = await getMessages(accessToken, conv.id);
+          setMessages(msgs);
+        } else {
+          // Create new conversation
+          const conv = await createConversation(accessToken);
+          setConversationId(conv.id);
+        }
+      } catch {
+        setError('Failed to load chat');
+      } finally {
+        setIsLoading(false);
+      }
+    })();
   }, [accessToken]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [view]);
+  }, [messages]);
 
-  // Focus input when entering chat mode
+  // Focus input on load
   useEffect(() => {
-    if (view.mode === 'chat') {
+    if (!isLoading) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [view]);
-
-  const handleNewChat = async () => {
-    if (!accessToken) return;
-    setView({ mode: 'loading' });
-    try {
-      const conv = await createConversation(accessToken);
-      setConversations(prev => [conv, ...prev]);
-      setView({ mode: 'chat', conversationId: conv.id, messages: [] });
-    } catch {
-      setError('Failed to create conversation');
-      setView({ mode: 'list' });
-    }
-  };
-
-  const handleSelectConversation = async (conv: ChatConversation) => {
-    if (!accessToken) return;
-    setView({ mode: 'loading' });
-    try {
-      const msgs = await getMessages(accessToken, conv.id);
-      setView({ mode: 'chat', conversationId: conv.id, messages: msgs });
-    } catch {
-      setError('Failed to load messages');
-      setView({ mode: 'list' });
-    }
-  };
+  }, [isLoading]);
 
   const handleSend = async (text?: string) => {
     const content = text || input.trim();
-    if (!content || !accessToken || view.mode !== 'chat' || isSending) return;
+    if (!content || !accessToken || !conversationId || isSending) return;
 
     setInput('');
     setIsSending(true);
@@ -89,89 +80,37 @@ export default function ChatPanel({ onClose }: { onClose?: () => void }) {
     // Add user message optimistically
     const userMsg: ChatMessage & { products?: Product[] } = {
       id: `temp-${Date.now()}`,
-      conversationId: view.conversationId,
+      conversationId,
       role: 'user',
       content,
       productIds: [],
       createdAt: new Date().toISOString(),
     };
-    setView(v => v.mode === 'chat' ? { ...v, messages: [...v.messages, userMsg] } : v);
+    setMessages(prev => [...prev, userMsg]);
 
     try {
-      const result = await sendMessage(accessToken, view.conversationId, content);
+      const result = await sendMessage(accessToken, conversationId, content);
       const assistantMsg: ChatMessage & { products?: Product[] } = {
         ...result.message,
         products: result.products,
       };
-      setView(v => v.mode === 'chat' ? { ...v, messages: [...v.messages, assistantMsg] } : v);
-
-      // Update conversation list
-      setConversations(prev => {
-        const updated = prev.map(c =>
-          c.id === view.conversationId ? { ...c, updatedAt: new Date().toISOString() } : c,
-        );
-        return updated.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-      });
+      setMessages(prev => [...prev, assistantMsg]);
     } catch {
-      setView(v => v.mode === 'chat' ? {
-        ...v,
-        messages: [...v.messages, {
-          id: `err-${Date.now()}`,
-          conversationId: view.conversationId,
-          role: 'assistant' as const,
-          content: 'Something went wrong. Please try again.',
-          productIds: [],
-          createdAt: new Date().toISOString(),
-        }],
-      } : v);
+      setMessages(prev => [...prev, {
+        id: `err-${Date.now()}`,
+        conversationId,
+        role: 'assistant' as const,
+        content: 'Something went wrong. Please try again.',
+        productIds: [],
+        createdAt: new Date().toISOString(),
+      }]);
     } finally {
       setIsSending(false);
     }
   };
 
-  // ── Conversation List ──
-  if (view.mode === 'list') {
-    return (
-      <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <div>
-            <span className="text-sm font-semibold text-foreground">AI Chat</span>
-            <p className="text-xs text-text-muted">Ask about products</p>
-          </div>
-        </div>
-        <div className="flex-1 overflow-y-auto p-3">
-          <button
-            onClick={handleNewChat}
-            className="w-full mb-3 rounded-lg border border-dashed border-border bg-background px-3 py-2.5 text-sm text-text-secondary hover:border-primary/50 hover:text-primary transition-colors"
-          >
-            + New Chat
-          </button>
-          {conversations.length === 0 ? (
-            <div className="py-8 text-center">
-              <div className="text-3xl mb-2">💬</div>
-              <p className="text-sm text-text-muted">Start a conversation to get product recommendations.</p>
-            </div>
-          ) : (
-            conversations.map(conv => (
-              <button
-                key={conv.id}
-                onClick={() => handleSelectConversation(conv)}
-                className="w-full mb-2 rounded-lg border border-border bg-background px-3 py-2.5 text-left hover:border-primary/30 transition-colors"
-              >
-                <div className="text-sm font-medium text-foreground truncate">{conv.title}</div>
-                <div className="text-xs text-text-muted mt-0.5">
-                  {new Date(conv.updatedAt).toLocaleDateString()}
-                </div>
-              </button>
-            ))
-          )}
-        </div>
-      </div>
-    );
-  }
-
   // ── Loading ──
-  if (view.mode === 'loading') {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-sm text-text-muted">Loading...</div>
@@ -179,24 +118,29 @@ export default function ChatPanel({ onClose }: { onClose?: () => void }) {
     );
   }
 
-  // ── Active Chat ──
+  // ── Chat View ──
   return (
     <div className="flex flex-col h-full">
-      {/* Header with back button */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-        <button
-          onClick={() => setView({ mode: 'list' })}
-          className="text-text-muted hover:text-foreground text-sm"
-        >
-          ←
-        </button>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <span className="text-sm font-semibold text-foreground">AI Chat</span>
+        {messages.length > 0 && (
+          <button
+            onClick={() => setMessages([])}
+            className="text-xs text-text-muted hover:text-foreground transition-colors"
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-        {view.messages.length === 0 && (
+        {messages.length === 0 && (
           <div className="py-4">
+            <div className="rounded-xl bg-background border border-border px-3 py-2 text-sm text-foreground mb-4">
+              Hi {user?.username || 'there'}! 👋 I'm your AI shopping assistant. How can I help you find what you're looking for?
+            </div>
             <p className="text-sm text-text-muted text-center mb-4">What are you looking for today?</p>
             <div className="flex flex-wrap gap-2 justify-center">
               {QUICK_ACTIONS.map(action => (
@@ -212,7 +156,7 @@ export default function ChatPanel({ onClose }: { onClose?: () => void }) {
           </div>
         )}
 
-        {view.messages.map(msg => (
+        {messages.map(msg => (
           <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] ${msg.role === 'user' ? '' : 'space-y-2'}`}>
               <div
