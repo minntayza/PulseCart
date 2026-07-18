@@ -202,7 +202,17 @@ export default function ProductAdminPanel() {
               </button>
             ))}
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <div className="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"><path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" /></svg>
+            <input
+              type="search"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-border bg-surface pl-9 pr-4 py-2 text-sm outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10"
+            />
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
             {categories.map((c) => (
               <button
                 key={c}
@@ -219,7 +229,7 @@ export default function ProductAdminPanel() {
             ))}
           </div>
         </div>
-        <div className="overflow-y-auto p-2 space-y-1">
+        <div className="overflow-y-auto p-2 space-y-1 flex-1 bg-surface-alt/30">
           {filteredProducts.map((p) => {
             const isOutOfStock = (p.stock ?? 0) === 0;
             return (
@@ -227,37 +237,38 @@ export default function ProductAdminPanel() {
                 key={p.id}
                 type="button"
                 onClick={() => selectProduct(p)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between gap-2 ${
+                className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all flex flex-col gap-1 ${
                   selectedProduct?.id === p.id
-                    ? 'bg-primary/10 text-primary font-bold'
+                    ? 'bg-primary-light border border-primary/20 shadow-sm'
                     : isOutOfStock
-                      ? 'hover:bg-danger/5 text-text-muted'
-                      : 'hover:bg-surface-alt'
+                      ? 'hover:bg-danger/5 border border-danger/10'
+                      : 'hover:bg-border-light border border-transparent'
                 }`}
               >
-                <span className={`truncate ${isOutOfStock ? 'line-through decoration-danger/30' : ''}`}>{p.name}</span>
-                {isOutOfStock && (
-                  <span className="shrink-0 text-[10px] font-bold bg-danger/10 text-danger px-1.5 py-0.5 rounded-full">
-                    0
-                  </span>
-                )}
+                <span className={`font-medium ${selectedProduct?.id === p.id ? 'text-primary' : 'text-text-secondary'}`}>{p.name}</span>
+                <span className="text-xs text-text-muted">{p.category} • {formatPrice(p.price)} {isOutOfStock && '· Out of stock'}</span>
               </button>
             );
           })}
-          {filteredProducts.length === 0 && <p className="text-center text-xs text-text-muted mt-4">No products found</p>}
+          {filteredProducts.length === 0 && (
+            <div className="text-center py-8">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 mx-auto text-border mb-2"><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg>
+              <p className="text-sm text-text-muted">No products found</p>
+            </div>
+          )}
         </div>
       </aside>
 
-      {/* Form */}
-      <form onSubmit={submit} className="space-y-4 rounded-2xl border border-border bg-surface p-5">
+      {/* Center Panel: Form */}
+      <form onSubmit={submit} className="rounded-2xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col h-[750px]">
         {selectedProduct && (selectedProduct.stock ?? 0) === 0 && (
-          <div className="flex items-center gap-2 rounded-xl border border-danger/20 bg-danger/5 px-3 py-2.5 text-sm text-danger animate-fade-in">
+          <div className="flex items-center gap-2 rounded-none border-b border-danger/20 bg-danger/5 px-6 py-3 text-sm text-danger">
             <span className="text-base">⚠️</span>
             <span className="font-medium">This product is out of stock.</span>
             <span className="text-danger/70 text-xs">Update the stock quantity above to make it available again.</span>
           </div>
         )}
-        <div className="flex justify-between items-center">
+        <div className="p-6 border-b border-border-light flex justify-between items-center bg-surface sticky top-0 z-10">
           <div>
             <h2 className="text-xl font-bold text-foreground">{selectedProduct ? 'Edit Product' : 'Add New Product'}</h2>
             <p className="text-sm text-text-muted mt-1">Configure product details and media.</p>

@@ -59,7 +59,8 @@ export default function ManagerDashboard() {
             </div>
           </div>
 
-          <div className="p-4">
+          {/* Tab Content */}
+          <div className="p-6">
             {activeTab === 'orders' && <OrdersPanel />}
             {activeTab === 'market' && <MarketPanel />}
             {activeTab === 'feedback' && <FeedbackPanel />}
