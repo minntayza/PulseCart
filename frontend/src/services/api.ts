@@ -8,16 +8,30 @@ interface ValidationIssue {
 }
 
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  let response = await fetch(`${API_URL}${path}`, init);
+  let requestInit = init;
+  const suppliedHeaders = new Headers(init?.headers);
+
+  // Context state can retain an expired token while Supabase has already
+  // refreshed its persisted session. Resolve that session before every
+  // authenticated request so all manager actions use the current token.
+  if (suppliedHeaders.has('Authorization')) {
+    const { data } = await getSupabaseClient().auth.getSession();
+    if (data.session?.access_token) {
+      suppliedHeaders.set('Authorization', `Bearer ${data.session.access_token}`);
+      requestInit = { ...init, headers: suppliedHeaders };
+    }
+  }
+
+  let response = await fetch(`${API_URL}${path}`, requestInit);
 
   // Supabase access tokens expire. Refresh once and retry only requests that
   // already supplied authentication; anonymous 401 responses remain unchanged.
-  if (response.status === 401 && new Headers(init?.headers).has('Authorization')) {
+  if (response.status === 401 && suppliedHeaders.has('Authorization')) {
     const { data, error } = await getSupabaseClient().auth.refreshSession();
     if (!error && data.session?.access_token) {
-      const headers = new Headers(init?.headers);
+      const headers = new Headers(requestInit?.headers);
       headers.set('Authorization', `Bearer ${data.session.access_token}`);
-      response = await fetch(`${API_URL}${path}`, { ...init, headers });
+      response = await fetch(`${API_URL}${path}`, { ...requestInit, headers });
     }
   }
 

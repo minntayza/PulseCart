@@ -53,10 +53,15 @@ def test_order_requires_auth_and_manager_decision():
 def test_feedback_requires_customer_and_manager_to_list():
     created = client.post("/feedback", json={"message": "Please improve delivery visibility"}, headers=customer)
     assert created.status_code == 201
+    assert created.json()["theme"] == "delivery"
     assert client.get("/feedback", headers=customer).status_code == 403
     listed = client.get("/feedback", headers=manager)
     assert listed.status_code == 200
     assert any(item["id"] == created.json()["id"] for item in listed.json())
+
+    general = client.post("/feedback", json={"message": "More Mac products are required"}, headers=customer)
+    assert general.status_code == 201
+    assert general.json()["theme"] == "other"
 
 
 def test_rejected_order_queues_burmese_apology_email():
