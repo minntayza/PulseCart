@@ -1,7 +1,25 @@
 import json
 import httpx
+from collections import Counter
 from ..models.schemas import FeedbackInsights, FeedbackTheme, AgentTrace, TraceLog
 from ..config import get_settings
+
+
+THEME_KEYWORDS = {
+    "delivery": ("delivery", "shipping", "late", "arrived"),
+    "pricing": ("price", "expensive", "cost", "cheap"),
+    "quality": ("quality", "broken", "defective", "broke"),
+    "service": ("service", "support", "staff", "rude"),
+}
+
+
+def classify_feedback_theme(message: str) -> str:
+    """Assign known themes deterministically; unmatched feedback is other."""
+    normalized = message.casefold()
+    for theme, keywords in THEME_KEYWORDS.items():
+        if any(keyword in normalized for keyword in keywords):
+            return theme
+    return "other"
 
 
 def analyze_feedback(messages: list[str]) -> tuple[FeedbackInsights, AgentTrace]:
@@ -112,13 +130,24 @@ Group similar messages. Severity: high=5+ mentions, medium=3-4, low=1-2."""
         result_text = result_text.rsplit("```", 1)[0]
     result = json.loads(result_text.strip())
 
-    themes = [FeedbackTheme(**t) for t in result["themes"]]
+    ai_themes = {item.get("theme"): item for item in result.get("themes", [])}
+    theme_counts = Counter(classify_feedback_theme(message) for message in messages)
+    themes = []
+    for theme, count in theme_counts.items():
+        ai_theme = ai_themes.get(theme, {})
+        severity = "high" if count >= 5 else "medium" if count >= 3 else "low"
+        themes.append(FeedbackTheme(
+            theme=theme,
+            severity=severity,
+            fixSuggestion=ai_theme.get("fixSuggestion") or _generate_mock_fix(theme),
+            messageCount=count,
+        ))
     logs = [
         TraceLog(timestamp="00:00.300", type="action", text="Called custom LLM API for analysis"),
         TraceLog(timestamp="00:01.200", type="reasoning", text=f"LLM identified {len(themes)} themes"),
     ]
 
-    return FeedbackInsights(themes=themes, totalMessages=result["totalMessages"]), logs
+    return FeedbackInsights(themes=themes, totalMessages=len(messages)), logs
 
 
 def _mock_analysis(messages: list[str]) -> tuple[FeedbackInsights, list[TraceLog]]:
@@ -127,16 +156,7 @@ def _mock_analysis(messages: list[str]) -> tuple[FeedbackInsights, list[TraceLog
     logs: list[TraceLog] = []
 
     for msg in messages:
-        lower = msg.lower()
-        theme = "other"
-        if any(w in lower for w in ["delivery", "shipping", "late", "arrived"]):
-            theme = "delivery"
-        elif any(w in lower for w in ["price", "expensive", "cost", "cheap"]):
-            theme = "pricing"
-        elif any(w in lower for w in ["quality", "broken", "defective", "broke"]):
-            theme = "quality"
-        elif any(w in lower for w in ["service", "support", "staff", "rude"]):
-            theme = "service"
+        theme = classify_feedback_theme(msg)
 
         if theme not in theme_counts:
             theme_counts[theme] = {"count": 0, "messages": []}
