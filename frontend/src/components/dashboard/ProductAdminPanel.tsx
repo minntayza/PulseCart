@@ -41,12 +41,13 @@ export default function ProductAdminPanel() {
     }
   };
 
-  useEffect(() => { loadProducts(); }, []);
-
-  const loadProducts = async () => {
-    try { const data = await getProducts(); setProducts(data); }
-    catch (err) { console.error('Failed to load products', err); }
-  };
+  useEffect(() => {
+    let cancelled = false;
+    getProducts()
+      .then((data) => { if (!cancelled) setProducts(data); })
+      .catch((err) => { if (!cancelled) console.error('Failed to load products', err); });
+    return () => { cancelled = true; };
+  }, []);
 
   const selectProduct = (product: Product | null) => {
     setSelectedProduct(product);

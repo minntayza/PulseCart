@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import { Product } from '@/types';
+import { Product, formatPrice } from '@/types';
 import { createOrder } from '@/services/orderService';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './AuthProvider';
@@ -83,19 +83,19 @@ export default function CheckoutModal({ isOpen, onClose, cart, onRemoveFromCart,
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
       <div className="relative bg-surface rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-lg font-bold text-text">
+          <h2 className="text-lg font-bold text-foreground">
             {step === 'cart' ? 'Your Cart' : step === 'delivery' ? 'Delivery Details' : 'Order Submitted'}
           </h2>
-          <button onClick={closeModal} className="text-muted hover:text-text text-xl" aria-label="Close">×</button>
+          <button onClick={closeModal} className="text-text-muted hover:text-foreground text-xl" aria-label="Close">×</button>
         </div>
 
         <div className="flex gap-2 px-4 py-3 bg-white/5 border-b border-border text-xs">
           {['Cart', 'Delivery', 'Approval'].map((label, index) => (
             <div key={label} className="flex flex-1 items-center gap-2">
               <span className={`grid h-6 w-6 place-items-center rounded-full ${
-                ['cart', 'delivery', 'confirm'].indexOf(step) >= index ? 'bg-primary text-white' : 'bg-white/10 text-muted'
+                ['cart', 'delivery', 'confirm'].indexOf(step) >= index ? 'bg-primary text-white' : 'bg-white/10 text-text-muted'
               }`}>{index + 1}</span>
-              <span className="text-muted">{label}</span>
+              <span className="text-text-muted">{label}</span>
             </div>
           ))}
         </div>
@@ -103,14 +103,14 @@ export default function CheckoutModal({ isOpen, onClose, cart, onRemoveFromCart,
         <div className="p-4 max-h-[28rem] overflow-y-auto">
           {step === 'cart' && (
             <div className="space-y-3">
-              {cart.length === 0 ? <p className="py-8 text-center text-sm text-muted">Your cart is empty.</p> : groupedCart.map(({ product, quantity }) => (
+              {cart.length === 0 ? <p className="py-8 text-center text-sm text-text-muted">Your cart is empty.</p> : groupedCart.map(({ product, quantity }) => (
                 <div key={product.id} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
                   <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary-light text-sm font-bold text-primary">{quantity}×</span>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-medium truncate">{product.name}</h3>
-                    <p className="text-xs text-muted">${product.price.toFixed(2)} each · ${(product.price * quantity).toFixed(2)} total</p>
+                    <p className="text-xs text-text-muted">{formatPrice(product.price)} each · {formatPrice(product.price * quantity)} total</p>
                   </div>
-                  <button onClick={() => onRemoveFromCart(product.id)} className="text-muted hover:text-danger" aria-label={`Remove all ${product.name} from cart`}>×</button>
+                  <button onClick={() => onRemoveFromCart(product.id)} className="text-text-muted hover:text-danger" aria-label={`Remove all ${product.name} from cart`}>×</button>
                 </div>
               ))}
             </div>
@@ -118,17 +118,17 @@ export default function CheckoutModal({ isOpen, onClose, cart, onRemoveFromCart,
 
           {step === 'delivery' && (
             <form id="checkout-form" onSubmit={handleSubmit} className="space-y-4">
-              <label className="block text-xs text-muted">Customer name
-                <input value={customerName} onChange={(event) => setCustomerName(event.target.value)} className="mt-1 w-full px-3 py-2 bg-white/5 border border-border rounded-lg text-sm text-text" autoComplete="name" />
+              <label className="block text-xs text-text-muted">Customer name
+                <input value={customerName} onChange={(event) => setCustomerName(event.target.value)} className="mt-1 w-full px-3 py-2 bg-white/5 border border-border rounded-lg text-sm text-foreground" autoComplete="name" />
               </label>
-              <label className="block text-xs text-muted">Delivery address
-                <textarea value={address} onChange={(event) => setAddress(event.target.value)} className="mt-1 w-full px-3 py-2 bg-white/5 border border-border rounded-lg text-sm text-text" rows={3} autoComplete="street-address" />
+              <label className="block text-xs text-text-muted">Delivery address
+                <textarea value={address} onChange={(event) => setAddress(event.target.value)} className="mt-1 w-full px-3 py-2 bg-white/5 border border-border rounded-lg text-sm text-foreground" rows={3} autoComplete="street-address" />
               </label>
-              <label className="block text-xs text-muted">Phone number
-                <input value={phone} onChange={(event) => setPhone(event.target.value)} className="mt-1 w-full px-3 py-2 bg-white/5 border border-border rounded-lg text-sm text-text" type="tel" autoComplete="tel" />
+              <label className="block text-xs text-text-muted">Phone number
+                <input value={phone} onChange={(event) => setPhone(event.target.value)} className="mt-1 w-full px-3 py-2 bg-white/5 border border-border rounded-lg text-sm text-foreground" type="tel" autoComplete="tel" />
               </label>
               {error && <p className="text-xs text-danger" role="alert">{error}</p>}
-              <div className="bg-agent/5 border border-agent/20 rounded-lg p-3 text-xs text-text/70">
+              <div className="bg-agent/5 border border-agent/20 rounded-lg p-3 text-xs text-foreground/70">
                 The Order Coordinator validates these details and queues the order. A manager must approve it before confirmation.
               </div>
             </form>
@@ -138,17 +138,17 @@ export default function CheckoutModal({ isOpen, onClose, cart, onRemoveFromCart,
             <div className="text-center py-6">
               <div className="text-4xl mb-3">✓</div>
               <h3 className="text-lg font-bold mb-2">Queued for manager approval</h3>
-              <p className="text-sm text-muted mb-4">The order is pending. It is not confirmed until a manager approves it.</p>
+              <p className="text-sm text-text-muted mb-4">The order is pending. It is not confirmed until a manager approves it.</p>
               <div className="bg-white/5 rounded-lg p-3 flex justify-between text-sm">
-                <span className="font-mono">#{orderId}</span><strong className="text-primary">${submittedTotal.toFixed(2)}</strong>
+                <span className="font-mono">#{orderId}</span><strong className="text-primary">{formatPrice(submittedTotal)}</strong>
               </div>
             </div>
           )}
         </div>
 
         <div className="p-4 border-t border-border flex items-center justify-between">
-          {step === 'cart' && <><strong>${total.toFixed(2)}</strong><button onClick={continueToDelivery} disabled={!cart.length} className="px-4 py-2 bg-primary text-white text-sm rounded-lg disabled:opacity-50">{user ? 'Continue' : 'Sign in to checkout'}</button></>}
-          {step === 'delivery' && <><button onClick={() => setStep('cart')} className="text-sm text-muted">Back</button><button form="checkout-form" disabled={isSubmitting} className="px-4 py-2 bg-primary text-white text-sm rounded-lg disabled:opacity-50">{isSubmitting ? 'Submitting…' : 'Submit for approval'}</button></>}
+          {step === 'cart' && <><strong>{formatPrice(total)}</strong><button onClick={continueToDelivery} disabled={!cart.length} className="px-4 py-2 bg-primary text-white text-sm rounded-lg disabled:opacity-50">{user ? 'Continue' : 'Sign in to checkout'}</button></>}
+          {step === 'delivery' && <><button onClick={() => setStep('cart')} className="text-sm text-text-muted">Back</button><button form="checkout-form" disabled={isSubmitting} className="px-4 py-2 bg-primary text-white text-sm rounded-lg disabled:opacity-50">{isSubmitting ? 'Submitting…' : 'Submit for approval'}</button></>}
           {step === 'confirm' && <button onClick={closeModal} className="w-full px-4 py-2 bg-primary text-white text-sm rounded-lg">Done</button>}
         </div>
       </div>

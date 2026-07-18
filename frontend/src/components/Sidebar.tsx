@@ -16,7 +16,7 @@ const categories = [
 export default function Sidebar({ selectedCategory, onCategoryChange }: CategoryNavProps) {
   return (
     <div className="flex flex-col gap-4">
-      <nav className="flex gap-2 overflow-x-auto pb-1" aria-label="Product categories">
+      <nav className="flex gap-2 overflow-x-auto pb-1 scrollbar-none" aria-label="Product categories">
         {categories.map((category) => (
           <button
             key={category.id}

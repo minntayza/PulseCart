@@ -9,25 +9,30 @@ export default function FeedbackPanel() {
   const { accessToken } = useAuth();
   const [insights, setInsights] = useState<FeedbackInsights | null>(null);
   const [messages, setMessages] = useState<FeedbackMessage[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
 
+  const loading = accessToken ? !hasLoaded : false;
+
   useEffect(() => {
-    if (!accessToken) {
-      setLoading(false);
-      return;
-    }
+    if (!accessToken) return;
+    let cancelled = false;
     Promise.all([getInsights(accessToken), getFeedback(accessToken)])
       .then(([ins, msgs]) => {
-        setInsights(ins);
-        setMessages(msgs);
+        if (!cancelled) {
+          setInsights(ins);
+          setMessages(msgs);
+        }
       })
       .catch(() => {
-        setInsights(null);
-        setMessages([]);
+        if (!cancelled) {
+          setInsights(null);
+          setMessages([]);
+        }
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (!cancelled) setHasLoaded(true); });
+    return () => { cancelled = true; };
   }, [accessToken]);
 
   const severityColors: Record<string, string> = {
@@ -72,12 +77,12 @@ export default function FeedbackPanel() {
     <div className="space-y-6">
       {/* Themes */}
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3 mb-3">
           <h4 className="text-xs font-semibold uppercase tracking-wider text-text-secondary">Identified Themes</h4>
           <button
             onClick={handleAnalyze}
             disabled={analyzing || messages.length === 0}
-            className="text-sm font-semibold px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/80 shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary text-white hover:bg-primary/80 shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {analyzing ? '⏳ Analyzing...' : '🔄 Analyze Now'}
           </button>
@@ -102,7 +107,7 @@ export default function FeedbackPanel() {
                     <div className="flex items-center justify-between mb-1.5">
                       <div className="flex items-center gap-2">
                         <span className="text-base">{themeIcons[theme.theme] || '📝'}</span>
-                        <span className="text-sm font-medium text-text capitalize">{theme.theme}</span>
+                        <span className="text-sm font-medium text-foreground capitalize">{theme.theme}</span>
                         <span className="text-xs text-text-secondary">({theme.messageCount} mentions)</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -115,7 +120,7 @@ export default function FeedbackPanel() {
                     <p className="text-sm text-text-secondary ml-7">{theme.fixSuggestion}</p>
                   </button>
                   {isSelected && matchingMessages.length > 0 && (
-                    <div className="mt-2 ml-4 space-y-1.5 border-l-2 border-primary/20 pl-3">
+                    <div className="mt-2 ml-4 space-y-1.5 border-l-2 border-primary/20 pl-3 animate-slide-up">
                       {matchingMessages.map(msg => (
                         <div key={msg.id} className="p-2.5 bg-surface rounded-lg border border-border-light">
                           <p className="text-sm text-text-secondary leading-relaxed">{msg.message}</p>

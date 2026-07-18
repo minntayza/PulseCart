@@ -39,7 +39,7 @@ export default function LoginForm() {
         {error && <p className="text-xs text-danger" role="alert">{error}</p>}
         <button disabled={isSubmitting} className="w-full py-2 bg-primary text-white rounded-lg disabled:opacity-50">{isSubmitting ? 'Signing in…' : 'Sign in'}</button>
       </form>
-      <div className="mt-5 p-3 bg-agent/5 border border-agent/20 rounded-lg text-xs text-muted space-y-1">
+      <div className="mt-5 p-3 bg-agent/5 border border-agent/20 rounded-lg text-xs text-text-muted space-y-1">
         <p><strong>Manager:</strong> manager@pulsecart.demo / Manager123!</p>
         <p><strong>Customer:</strong> customer@pulsecart.demo / Customer123!</p>
       </div>

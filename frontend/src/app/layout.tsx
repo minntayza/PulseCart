@@ -15,7 +15,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('pulsecart:theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.theme=t}catch(e){}})()` }} />
       </head>
-      <body className="antialiased bg-background text-text font-sans">
+      <body className="antialiased bg-background text-foreground font-sans">
         <AuthProvider>
           <AppHeader />
           {children}

@@ -34,7 +34,7 @@ export default function RegisterPage() {
         <label className="block text-sm">Username<input required value={form.username} onChange={(event) => field('username', event.target.value)} autoComplete="username" className="mt-1 w-full px-3 py-2 bg-white/5 border border-border rounded-lg" /></label>
         <label className="block text-sm">Email<input required type="email" value={form.email} onChange={(event) => field('email', event.target.value)} autoComplete="email" className="mt-1 w-full px-3 py-2 bg-white/5 border border-border rounded-lg" /></label>
         <label className="block text-sm">Password<input required type="password" value={form.password} onChange={(event) => field('password', event.target.value)} autoComplete="new-password" className="mt-1 w-full px-3 py-2 bg-white/5 border border-border rounded-lg" /></label>
-        <p className="text-xs text-muted">8+ characters with uppercase, lowercase, and a number.</p>
+        <p className="text-xs text-text-muted">8+ characters with uppercase, lowercase, and a number.</p>
         <label className="block text-sm">Confirm password<input required type="password" value={form.confirm} onChange={(event) => field('confirm', event.target.value)} autoComplete="new-password" className="mt-1 w-full px-3 py-2 bg-white/5 border border-border rounded-lg" /></label>
         {error && <p className="text-xs text-danger" role="alert">{error}</p>}
         <button disabled={isSubmitting} className="w-full py-2 bg-primary text-white rounded-lg disabled:opacity-50">{isSubmitting ? 'Creating account…' : 'Create customer account'}</button>

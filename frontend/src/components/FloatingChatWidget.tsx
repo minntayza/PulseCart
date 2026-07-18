@@ -59,9 +59,9 @@ export default function FloatingChatWidget() {
   };
 
   return (
-    <div className="fixed bottom-6 left-6 z-50">
+    <div className="fixed bottom-6 left-6 z-50 max-sm:bottom-4 max-sm:left-4" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       {isOpen && (
-        <div className="mb-4 w-80 rounded-2xl border border-border bg-surface shadow-2xl">
+        <div className="mb-4 w-80 rounded-2xl border border-border bg-surface shadow-2xl max-sm:w-[calc(100vw-2rem)]">
           <div className="flex items-center gap-2 rounded-t-2xl border-b border-border bg-primary/10 px-4 py-3">
             <span className="text-lg">💬</span>
             <div>
@@ -115,7 +115,7 @@ export default function FloatingChatWidget() {
           💬
         </button>
         {!isOpen && (
-          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-danger text-[10px] font-bold text-white">
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-agent text-[10px] font-bold text-white">
             ?
           </span>
         )}

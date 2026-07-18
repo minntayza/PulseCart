@@ -106,11 +106,11 @@ export default function Home() {
   return (
     <main className="min-h-[calc(100vh-64px)]">
       <section className="hero-grid border-b border-border/70">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+        <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
           <div className="max-w-3xl">
             <span className="inline-flex rounded-full border border-primary/15 bg-primary-light px-3 py-1 text-xs font-bold text-primary">AI-assisted commerce, with you in control</span>
-            <h1 className="mt-5 text-4xl font-black tracking-[-0.04em] text-foreground sm:text-5xl lg:text-6xl">Find better products.<br/><span className="text-gradient">Understand every choice.</span></h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">Search a smarter storefront that adapts in real time, explains its recommendations, and keeps people in charge of important decisions.</p>
+            <h1 className="mt-4 text-3xl font-black tracking-[-0.04em] text-foreground sm:mt-5 sm:text-4xl lg:text-5xl xl:text-6xl">Find better products.<br/><span className="text-gradient">Understand every choice.</span></h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-text-secondary sm:mt-5 sm:text-base lg:text-lg">Search a smarter storefront that adapts in real time, explains its recommendations, and keeps people in charge of important decisions.</p>
           </div>
         </div>
       </section>

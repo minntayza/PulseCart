@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Order } from '@/types';
+import { Order, formatPrice } from '@/types';
 import { getOrders, markOrderDelivered, updateOrderStatus } from '@/services/orderService';
 import { OrderSkeleton } from '@/components/Skeleton';
 import { useAuth } from '@/components/AuthProvider';
@@ -73,7 +73,7 @@ export default function OrdersPanel() {
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2 pb-2">
         {(['pending', 'approved', 'delivered', 'rejected', 'all'] as const).map((status) => (
-          <button key={status} onClick={() => setFilter(status)} className={`px-3 py-1.5 text-xs rounded-lg capitalize ${filter === status ? 'bg-primary text-white' : 'bg-white/5 text-muted'}`}>
+          <button key={status} onClick={() => setFilter(status)} className={`px-3 py-1.5 text-xs rounded-lg capitalize ${filter === status ? 'bg-primary text-white' : 'bg-white/5 text-text-muted'}`}>
             {status} ({status === 'all' ? orders.length : orders.filter((order) => order.status === status).length})
           </button>
         ))}
@@ -83,7 +83,7 @@ export default function OrdersPanel() {
         <div className="py-12 text-center">
           <div className="text-3xl mb-2">📋</div>
           <h3 className="font-medium">No {filter === 'all' ? '' : filter} orders</h3>
-          <p className="text-sm text-muted">Orders matching this filter will appear here.</p>
+          <p className="text-sm text-text-muted">Orders matching this filter will appear here.</p>
         </div>
       )}
       {visibleOrders.map((order) => (
@@ -91,10 +91,10 @@ export default function OrdersPanel() {
           <span className="text-2xl">{order.items[0]?.image ?? '📦'}</span>
           <div className="flex-1 min-w-48">
             <h4 className="text-sm font-medium">{order.items.map((item) => item.name).join(', ')}</h4>
-            <p className="text-xs text-muted">{order.customerName} · {order.id} · {new Date(order.createdAt).toLocaleString()}</p>
-            <p className="text-xs text-muted truncate">{order.address} · {order.phone}</p>
+            <p className="text-xs text-text-muted">{order.customerName} · {order.id} · {new Date(order.createdAt).toLocaleString()}</p>
+            <p className="text-xs text-text-muted truncate">{order.address} · {order.phone}</p>
           </div>
-          <strong className="text-sm text-primary">${order.total.toFixed(2)}</strong>
+          <strong className="text-sm text-primary">{formatPrice(order.total)}</strong>
           <span className={`text-[10px] px-2 py-1 rounded-full ${
             order.status === 'pending' ? 'bg-accent/10 text-accent' : order.status === 'approved' ? 'bg-primary/10 text-primary' : order.status === 'delivered' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
           }`}>{order.status}</span>
