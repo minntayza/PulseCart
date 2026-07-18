@@ -14,7 +14,7 @@ def _build_catalog_context(products: list[Product]) -> str:
     lines = []
     for p in products:
         stock_label = f"stock:{p.stock}" if p.stock > 0 else "OUT OF STOCK"
-        lines.append(f"- [{p.id}] {p.name} | {p.category} | ${p.price} | {stock_label} | {p.description[:80]}")
+        lines.append(f"- [{p.id}] {p.name} | {p.category} | MMK {p.price:,.0f} | {stock_label} | {p.description[:80]}")
     return "\n".join(lines)
 
 
@@ -35,7 +35,7 @@ RULES:
 
 EXAMPLES:
 - User: "Do you have iPhone 13 Pro Max?" → wantedProduct MUST be {"name": "iPhone 13 Pro Max", "description": "User asked for iPhone 13 Pro Max"} even if you recommend iPhone 17 instead.
-- User: "I want a gaming laptop under $1000" → If a matching laptop exists, set wantedProduct to null. If not, set wantedProduct.
+- User: "I want a gaming laptop under MMK 2,000,000" → If a matching laptop exists, set wantedProduct to null. If not, set wantedProduct.
 - User: "Show me wireless earbuds" → If earbuds exist in catalog, wantedProduct is null. If not, set wantedProduct."""
 
 
