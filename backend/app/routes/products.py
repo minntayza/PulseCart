@@ -62,7 +62,7 @@ def generate_product_details(
 
         payload = {
             "model": "mimo-v2.5-pro",
-            "max_tokens": 1024,
+            "max_tokens": 4096,
             "system": DETAILS_SYSTEM_PROMPT,
             "messages": [
                 {
@@ -94,8 +94,16 @@ def generate_product_details(
 
         data = resp.json()
         print(f"[generate-details] Response keys: {list(data.keys())}")
-        print(f"[generate-details] Response snippet: {json.dumps(data)[:500]}")
-        text = data["content"][0]["text"].strip()
+        print(f"[generate-details] Stop reason: {data.get('stop_reason')}")
+
+        # Extract text content block (skip thinking blocks)
+        text_block = next(
+            (b for b in data.get("content", []) if b.get("type") == "text"),
+            None,
+        )
+        if not text_block:
+            raise HTTPException(status_code=502, detail="AI returned no text content")
+        text = text_block["text"].strip()
         # Strip markdown fences if present
         if text.startswith("```"):
             text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
