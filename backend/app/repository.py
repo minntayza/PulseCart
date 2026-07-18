@@ -3,6 +3,7 @@ from decimal import Decimal
 from threading import Lock
 from uuid import uuid4
 from fastapi import HTTPException
+import httpx
 from .fixtures import PRODUCTS
 from .models.schemas import AgentTrace, AuthUser, CreateFeedbackRequest, CreateOrderRequest, Feedback, FeedbackInsights, Order, OrderItem, Product, UpdateOrderStatusRequest
 from .config import get_settings
@@ -178,10 +179,23 @@ repository = MemoryRepository()
 class SupabaseRepository:
     def __init__(self, url: str, secret_key: str, storage_timeout: int = 120) -> None:
         from supabase import ClientOptions, create_client
+        # postgrest-py enables HTTP/2 by default. Some Supabase edge connections
+        # occasionally terminate reused HTTP/2 streams, which surfaces as
+        # httpx.RemoteProtocolError and takes down every catalog-backed route.
+        # HTTP/1.1 is fully supported by Supabase and avoids that failure mode.
+        self._http_client = httpx.Client(
+            timeout=storage_timeout,
+            follow_redirects=True,
+            http2=False,
+        )
         self.client = create_client(
             url,
             secret_key,
-            options=ClientOptions(storage_client_timeout=storage_timeout),
+            options=ClientOptions(
+                postgrest_client_timeout=storage_timeout,
+                storage_client_timeout=storage_timeout,
+                httpx_client=self._http_client,
+            ),
         )
         self.insights: list[FeedbackInsights] = []
         self._lock = Lock()
