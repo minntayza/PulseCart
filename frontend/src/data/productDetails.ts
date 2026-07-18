@@ -35,10 +35,19 @@ export function getProductDetails(product: Product): ProductDetails {
     { label: 'Customer rating', value: `${product.rating} out of 5 from ${product.reviews} reviews`, explanation: 'A summary of customer ratings in the demo catalog.' },
     { label: 'Warranty', value: shared.warranty },
   ];
+
+  // Use database fields when available (AI-generated), fall back to template
+  const categoryLabel = { laptops: 'laptop', chairs: 'chair', headphones: 'headphone system', accessories: 'computer accessory' }[product.category];
+  const templateOverview = `${product.name} is a ${categoryLabel} designed for people who want ${product.description.toLowerCase()}. It combines practical everyday use with the performance expected from its category.`;
+
   return {
-    ...shared,
-    overview: `${product.name} is a ${{ laptops: 'laptop', chairs: 'chair', headphones: 'headphone system', accessories: 'computer accessory' }[product.category]} designed for people who want ${product.description.toLowerCase()}. It combines practical everyday use with the performance expected from its category.`,
+    howItWorks: product.howItWorks || shared.howItWorks,
+    bestFor: product.bestFor?.length ? product.bestFor : shared.bestFor,
+    limitations: product.limitations?.length ? product.limitations : shared.limitations,
+    overview: product.overview || templateOverview,
     specifications,
-    stock: 8 + Number(product.id) * 2,
+    stock: product.stock ?? (8 + Number(product.id) * 2),
+    deliveryEstimate: shared.deliveryEstimate,
+    warranty: shared.warranty,
   };
 }
