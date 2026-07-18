@@ -58,3 +58,13 @@ export async function updateWantedStatus(
     headers: { Authorization: `Bearer ${token}` },
   });
 }
+
+export async function deleteWantedProduct(
+  token: string,
+  wantedId: string,
+): Promise<void> {
+  return apiRequest<void>(`/chat/wanted/${wantedId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
