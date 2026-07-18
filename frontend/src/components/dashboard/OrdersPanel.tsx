@@ -97,8 +97,17 @@ export default function OrdersPanel() {
       <div className="space-y-4">
         {visibleOrders.map((order) => (
           <div key={order.id} className="flex flex-col sm:flex-row sm:items-center gap-5 p-5 bg-surface border border-border rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300">
-            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-surface-alt text-3xl shrink-0">
-              {order.items[0]?.image ?? '📦'}
+            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-surface-alt text-3xl shrink-0 overflow-hidden">
+              {order.items[0]?.imageUrl ? (
+                <img src={order.items[0].imageUrl} alt={order.items[0].name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-3xl text-foreground/70 select-none">
+                  {order.items[0]?.category === 'laptops' ? '▰' :
+                   order.items[0]?.category === 'chairs' ? '⌑' :
+                   order.items[0]?.category === 'headphones' ? 'Ω' :
+                   order.items[0]?.category === 'accessories' ? '✦' : '📦'}
+                </span>
+              )}
             </div>
             
             <div className="flex-1 min-w-0">
