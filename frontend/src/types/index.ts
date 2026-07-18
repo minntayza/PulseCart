@@ -1,3 +1,8 @@
+/** Format a number as USD with thousand separators: 1395 → "$1,395.00" */
+export function formatPrice(price: number): string {
+  return `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -128,4 +133,17 @@ export interface FeedbackInsights {
   }>;
   totalMessages: number;
   analyzedAt: string;
+}
+
+export interface GenerateDetailsRequest {
+  name: string;
+  category: string;
+  description: string;
+}
+
+export interface GenerateDetailsResponse {
+  overview: string;
+  howItWorks: string;
+  bestFor: string[];
+  limitations: string[];
 }

@@ -1,4 +1,4 @@
-import { Product } from '@/types';
+import { Product, GenerateDetailsRequest, GenerateDetailsResponse } from '@/types';
 import { apiRequest } from './api';
 import { normalizeProduct } from './productService';
 
@@ -14,4 +14,18 @@ export async function updateManagerProduct(id: string, form: FormData, accessTok
 
 export async function deleteManagerProduct(id: string, accessToken: string): Promise<void> {
   await apiRequest(`/manager/products/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${accessToken}` } });
+}
+
+export async function generateProductDetails(
+  data: GenerateDetailsRequest,
+  accessToken: string
+): Promise<GenerateDetailsResponse> {
+  return apiRequest<GenerateDetailsResponse>('/products/generate-details', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(data),
+  });
 }
