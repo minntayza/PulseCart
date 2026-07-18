@@ -3,7 +3,7 @@ import { FormEvent, useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { createManagerProduct, updateManagerProduct, deleteManagerProduct, generateProductDetails } from '@/services/managerProductService';
 import { getProducts } from '@/services/productService';
-import { Product, formatPrice } from '@/types';
+import { Product, formatPrice, displayCategory } from '@/types';
 
 const initial = {
   name: '', category: 'laptops', price: '', stock: '', description: '',
@@ -150,6 +150,7 @@ export default function ProductAdminPanel() {
   const input = 'mt-1.5 w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10 placeholder:text-text-muted shadow-sm';
   const labelClass = 'block text-sm font-medium text-text-secondary';
   const categories = ['all', ...Array.from(new Set(products.map((p) => p.category)))];
+  const categoryLabel = (c: string) => c === 'all' ? 'All' : displayCategory(c);
   const outOfStockCount = products.filter((p) => (p.stock ?? 0) === 0).length;
   const filteredProducts = products.filter(
     (p) =>
@@ -224,7 +225,7 @@ export default function ProductAdminPanel() {
                     : 'bg-surface border-border text-text-secondary hover:bg-surface-alt'
                 }`}
               >
-                {c.charAt(0).toUpperCase() + c.slice(1)}
+                {categoryLabel(c).charAt(0).toUpperCase() + categoryLabel(c).slice(1)}
               </button>
             ))}
           </div>
@@ -246,7 +247,7 @@ export default function ProductAdminPanel() {
                 }`}
               >
                 <span className={`font-medium ${selectedProduct?.id === p.id ? 'text-primary' : 'text-text-secondary'}`}>{p.name}</span>
-                <span className="text-xs text-text-muted">{p.category} • {formatPrice(p.price)} {isOutOfStock && '· Out of stock'}</span>
+                <span className="text-xs text-text-muted">{displayCategory(p.category)} • {formatPrice(p.price)} {isOutOfStock && '· Out of stock'}</span>
               </button>
             );
           })}
@@ -305,7 +306,7 @@ export default function ProductAdminPanel() {
                 <select value={fields.category} onChange={(e) => update('category', e.target.value)} className={input}>
                   <option value="laptops">Laptops</option>
                   <option value="chairs">Chairs</option>
-                  <option value="headphones">Headphones</option>
+                  <option value="mobile phone">Mobile Phones</option>
                   <option value="accessories">Accessories</option>
                 </select>
               </div>
@@ -477,7 +478,7 @@ export default function ProductAdminPanel() {
             <div className="p-5">
               <div className="flex items-start justify-between gap-4 mb-2">
                 <div>
-                  <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">{fields.category || 'Category'}</p>
+                  <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">{displayCategory(fields.category) || 'Category'}</p>
                   <h4 className="font-bold text-foreground text-lg leading-tight line-clamp-2">{fields.name || 'Awesome Product Name'}</h4>
                 </div>
                 <div className="text-right">

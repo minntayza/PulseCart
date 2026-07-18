@@ -34,7 +34,7 @@ export default function OrderHistoryPage() {
   if (!user) return <div className="p-10 text-center"><h1 className="text-2xl font-bold">Sign in to view your orders</h1><Link href="/login?returnTo=/account/orders" className="inline-block mt-5 px-4 py-2 bg-primary text-white rounded-lg">Sign in</Link></div>;
 
   return (
-    <main className="max-w-5xl mx-auto p-6">
+    <main className="max-w-5xl mx-auto p-6 max-sm:p-4">
       <h1 className="text-2xl font-bold">My Orders</h1>
       <p className="text-sm text-text-muted mt-1 mb-6">Track pending decisions and review your purchase history.</p>
       {!orders.length ? <div className="py-16 text-center bg-surface border border-border rounded-xl"><p className="text-text-muted mb-4">You have not placed an order yet.</p><Link href="/" className="text-primary">Browse products</Link></div> : (

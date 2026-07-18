@@ -12,7 +12,7 @@ export default function AgentFeed() {
     return (
       <button
         onClick={() => setIsMinimized(false)}
-        className="fixed bottom-5 right-5 z-40 flex h-12 items-center gap-2 rounded-full bg-primary px-4 text-xs font-semibold text-white shadow-xl transition hover:-translate-y-0.5 hover:bg-primary-hover max-sm:bottom-16 max-sm:right-4 max-sm:h-10 max-sm:px-3 max-sm:text-[11px]"
+        className="fixed bottom-5 right-5 z-40 flex h-12 items-center gap-2 rounded-full bg-primary px-4 text-xs font-semibold text-white shadow-xl transition hover:-translate-y-0.5 hover:bg-primary-hover max-sm:bottom-20 max-sm:right-4 max-sm:h-10 max-sm:px-3 max-sm:text-[11px]"
       >
         <span className="rounded bg-agent px-1.5 py-0.5 text-[9px] font-black">AI</span> Activity
       </button>
@@ -20,7 +20,7 @@ export default function AgentFeed() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 w-80 bg-surface rounded-xl shadow-2xl border border-border overflow-hidden animate-in max-sm:bottom-16 max-sm:right-4 max-sm:w-72">
+    <div className="fixed bottom-4 right-4 z-40 w-80 bg-surface rounded-xl shadow-2xl border border-border overflow-hidden animate-in max-sm:bottom-20 max-sm:right-4 max-sm:w-72">
       {/* Header */}
       <div className="flex items-center justify-between p-3 bg-agent/10 border-b border-border">
         <div className="flex items-center gap-2">

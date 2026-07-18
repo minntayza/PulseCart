@@ -1,14 +1,15 @@
 'use client';
 
-import { Product, formatPrice } from '@/types';
+import { Product, formatPrice, displayCategory } from '@/types';
 import Link from 'next/link';
 
 interface ProductCardProps { product: Product; onAddToCart: (product: Product) => void }
 
-const visuals = {
+const visuals: Record<string, { symbol: string; gradient: string }> = {
   laptops: { symbol: '▰', gradient: 'from-indigo-100 via-violet-50 to-slate-100' },
   chairs: { symbol: '⌑', gradient: 'from-amber-100 via-orange-50 to-stone-100' },
-  headphones: { symbol: 'Ω', gradient: 'from-emerald-100 via-teal-50 to-slate-100' },
+  headphones: { symbol: '📱', gradient: 'from-emerald-100 via-teal-50 to-slate-100' },
+  'mobile phone': { symbol: '📱', gradient: 'from-emerald-100 via-teal-50 to-slate-100' },
   accessories: { symbol: '✦', gradient: 'from-sky-100 via-cyan-50 to-slate-100' },
 };
 
@@ -19,7 +20,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
 
   return (
     <article className={`group relative flex flex-col overflow-hidden rounded-3xl border border-border bg-surface shadow-[0_2px_10px_rgb(0,0,0,0.02)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgb(0,0,0,0.06)] hover:border-primary/30 ${isOutOfStock ? 'opacity-75 hover:opacity-90' : ''}`}>
-      <Link href={`/products/${product.id}`} aria-label={`View details for ${product.name}`} className={`relative block h-56 overflow-hidden bg-gradient-to-br ${visual.gradient}`} style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { display: 'grid', placeItems: 'center' }}>
+      <Link href={`/products/${product.id}`} aria-label={`View details for ${product.name}`} className={`relative block h-56 max-sm:h-44 overflow-hidden bg-gradient-to-br ${visual.gradient}`} style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { display: 'grid', placeItems: 'center' }}>
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
         <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-surface/50 blur-3xl transition-transform duration-700 group-hover:scale-150" />
 
@@ -37,11 +38,11 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           </span>
         )}
         <span className="absolute bottom-4 right-4 z-20 rounded-full bg-surface/90 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-text-secondary shadow-sm backdrop-blur-md transition-all duration-300 group-hover:translate-x-4 group-hover:opacity-0">
-          {product.category}
+          {displayCategory(product.category)}
         </span>
       </Link>
 
-      <div className="flex flex-1 flex-col p-6">
+      <div className="flex flex-1 flex-col p-6 max-sm:p-4">
         <h3 className="line-clamp-1 text-lg font-bold tracking-tight text-foreground">
           <Link href={`/products/${product.id}`} className="hover:text-primary transition-colors after:absolute after:inset-0">
             {product.name}

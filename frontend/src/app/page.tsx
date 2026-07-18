@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { products } from '@/data/products';
-import { Product } from '@/types';
+import { Product, displayCategory } from '@/types';
 import { searchProducts } from '@/services/searchService';
 import { getProducts } from '@/services/productService';
 import { clearCart, readCart, writeCart } from '@/services/storage';
@@ -84,7 +84,7 @@ export default function Home() {
 
   const filteredProducts = category === 'all'
     ? rankedProducts
-    : rankedProducts.filter((p) => p.category === category);
+    : rankedProducts.filter((p) => displayCategory(p.category) === category);
 
   const handleAddToCart = (product: Product) => {
     const next = [...cart, product];

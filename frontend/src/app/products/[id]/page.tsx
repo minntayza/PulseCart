@@ -4,7 +4,7 @@ import { products } from '@/data/products';
 import { getProductDetails } from '@/data/productDetails';
 import ProductDetailActions from '@/components/ProductDetailActions';
 import { getProduct } from '@/services/productService';
-import { formatPrice } from '@/types';
+import { formatPrice, displayCategory } from '@/types';
 
 export function generateStaticParams() { return products.map((product) => ({ id: product.id })); }
 
@@ -16,17 +16,17 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   if (!product) notFound();
   const details = getProductDetails(product);
   const related = products.filter((candidate) => candidate.category === product.category && candidate.id !== product.id).slice(0, 3);
-  const symbols = { laptops: '▰', chairs: '⌑', headphones: 'Ω', accessories: '✦' };
+  const symbols = { laptops: '▰', chairs: '⌑', 'mobile phone': '📱', accessories: '✦' };
 
   return <main className="min-h-screen bg-background"><div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-    <nav className="mb-8 flex items-center gap-2 text-sm text-text-secondary font-medium"><Link href="/" className="hover:text-primary transition-colors">Shop</Link><span className="text-border">•</span><span className="capitalize">{product.category}</span><span className="text-border">•</span><span className="truncate text-foreground">{product.name}</span></nav>
+    <nav className="mb-8 flex items-center gap-2 text-sm text-text-secondary font-medium"><Link href="/" className="hover:text-primary transition-colors">Shop</Link><span className="text-border">•</span><span className="capitalize">{displayCategory(product.category)}</span><span className="text-border">•</span><span className="truncate text-foreground">{product.name}</span></nav>
     <section className="grid gap-12 lg:grid-cols-[1.15fr_.85fr]">
       <div className="relative flex min-h-[32rem] items-center justify-center overflow-hidden rounded-[2.5rem] border border-border/80 bg-surface shadow-sm bg-cover bg-center group" style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}>
         <div className="absolute inset-0 bg-gradient-to-tr from-border-light/50 to-transparent pointer-events-none" />
         {!product.imageUrl && <span className="text-[10rem] font-black text-foreground/10 transition-transform duration-700 group-hover:scale-110">{symbols[product.category]}</span>}
       </div>
       <div className="lg:py-8 flex flex-col justify-center">
-        <span className="text-xs font-bold uppercase tracking-[.2em] text-primary">{product.category}</span>
+        <span className="text-xs font-bold uppercase tracking-[.2em] text-primary">{displayCategory(product.category)}</span>
         <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl leading-tight">{product.name}</h1>
         <p className="mt-6 text-base leading-relaxed text-text-secondary">{details.overview}</p>
         <div className="mt-8 flex items-end justify-between border-y border-border py-6">
@@ -62,7 +62,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             </div>
             <div>
               <h2 className="text-sm font-bold text-foreground tracking-tight">Why PulseCart recommends it</h2>
-              <p className="mt-1 text-sm leading-relaxed text-text-secondary">It matches interest in <span className="font-semibold text-foreground">{product.category}</span>, and its key configuration aligns with common high-value uses.</p>
+              <p className="mt-1 text-sm leading-relaxed text-text-secondary">It matches interest in <span className="font-semibold text-foreground">{displayCategory(product.category)}</span>, and its key configuration aligns with common high-value uses.</p>
             </div>
           </div>
         </div>

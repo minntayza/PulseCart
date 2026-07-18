@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Order, formatPrice } from '@/types';
+import { Order, formatPrice, displayCategory } from '@/types';
 import { getOrders, markOrderDelivered, updateOrderStatus } from '@/services/orderService';
 import { OrderSkeleton } from '@/components/Skeleton';
 import { useAuth } from '@/components/AuthProvider';
@@ -102,10 +102,10 @@ export default function OrdersPanel() {
                 <img src={order.items[0].imageUrl} alt={order.items[0].name} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-3xl text-foreground/70 select-none">
-                  {order.items[0]?.category === 'laptops' ? '▰' :
-                   order.items[0]?.category === 'chairs' ? '⌑' :
-                   order.items[0]?.category === 'headphones' ? 'Ω' :
-                   order.items[0]?.category === 'accessories' ? '✦' : '📦'}
+                  {displayCategory(order.items[0]?.category ?? '') === 'laptops' ? '▰' :
+                   displayCategory(order.items[0]?.category ?? '') === 'chairs' ? '⌑' :
+                   displayCategory(order.items[0]?.category ?? '') === 'mobile phone' ? '📱' :
+                   displayCategory(order.items[0]?.category ?? '') === 'accessories' ? '✦' : '📦'}
                 </span>
               )}
             </div>

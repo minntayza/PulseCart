@@ -2,10 +2,18 @@ export function formatPrice(price: number): string {
   return `${price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} MMK`;
 }
 
+/** Map backend category names to frontend display labels */
+const CATEGORY_DISPLAY: Record<string, string> = {
+  headphones: 'mobile phone',
+};
+export function displayCategory(category: string): string {
+  return CATEGORY_DISPLAY[category] ?? category;
+}
+
 export interface Product {
   id: string;
   name: string;
-  category: 'laptops' | 'chairs' | 'headphones' | 'accessories';
+  category: 'laptops' | 'chairs' | 'mobile phone' | 'accessories';
   price: number;
   image: string;
   description: string;

@@ -20,10 +20,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    // In development, clear persisted Supabase session so app starts logged out
-    if (process.env.NODE_ENV === 'development') {
-      Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
-    }
     const apply = (result: authService.AuthResult | null) => { if (!active) return; setUser(result?.user ?? null); setAccessToken(result?.accessToken ?? null); setIsLoading(false); };
     void authService.getSession().then(apply).catch(() => apply(null));
     const unsubscribe = authService.subscribe(apply);

@@ -1,6 +1,6 @@
-import { Product, ProductDetails } from '@/types';
+import { Product, ProductDetails, displayCategory } from '@/types';
 
-const categoryDetails: Record<Product['category'], Omit<ProductDetails, 'overview' | 'specifications' | 'stock'>> = {
+const categoryDetails: Record<string, Omit<ProductDetails, 'overview' | 'specifications' | 'stock'>> = {
   laptops: {
     howItWorks: 'The processor handles everyday instructions while the graphics processor creates demanding visuals. Fast memory keeps several tasks responsive, and the high-refresh display redraws motion more often for smoother games and creative work.',
     bestFor: ['Modern PC gaming', 'Video editing and 3D work', 'Software development', 'People who want desktop-level power in a portable device'],
@@ -14,9 +14,15 @@ const categoryDetails: Record<Product['category'], Omit<ProductDetails, 'overvie
     warranty: '3-year limited warranty',
   },
   headphones: {
-    howItWorks: 'Drivers convert electrical signals into sound. Active noise cancellation listens to surrounding noise and produces an opposing signal, reducing steady sounds such as engines, fans, and office hum.',
-    bestFor: ['Music and podcasts', 'Travel and commuting', 'Calls in noisy spaces', 'Focused gaming or office work'],
-    limitations: ['Noise cancellation cannot remove every voice or sudden sound', 'Wireless models need charging', 'Fit and comfort vary by head shape'],
+    howItWorks: 'Mobile phones combine computing, communication, and sensors into a pocket-sized device. They connect via cellular networks and Wi-Fi, running apps for messaging, browsing, photography, and more.',
+    bestFor: ['Daily communication', 'On-the-go productivity', 'Photography and video', 'Navigation and entertainment'],
+    limitations: ['Battery life limits全天 usage', 'Screen size restricts detailed work', 'Performance varies by model and price'],
+    warranty: '1-year manufacturer warranty',
+  },
+  'mobile phone': {
+    howItWorks: 'Mobile phones combine computing, communication, and sensors into a pocket-sized device. They connect via cellular networks and Wi-Fi, running apps for messaging, browsing, photography, and more.',
+    bestFor: ['Daily communication', 'On-the-go productivity', 'Photography and video', 'Navigation and entertainment'],
+    limitations: ['Battery life limits全天 usage', 'Screen size restricts detailed work', 'Performance varies by model and price'],
     warranty: '1-year manufacturer warranty',
   },
   accessories: {
@@ -30,14 +36,14 @@ const categoryDetails: Record<Product['category'], Omit<ProductDetails, 'overvie
 export function getProductDetails(product: Product): ProductDetails {
   const shared = categoryDetails[product.category];
   const specifications: ProductDetails['specifications'] = [
-    { label: 'Category', value: product.category[0].toUpperCase() + product.category.slice(1) },
+    { label: 'Category', value: displayCategory(product.category) },
     { label: 'Key configuration', value: product.description, explanation: 'The main features provided by the manufacturer for this model.' },
     { label: 'Customer rating', value: `${product.rating} out of 5 from ${product.reviews} reviews`, explanation: 'A summary of customer ratings in the demo catalog.' },
     { label: 'Warranty', value: shared.warranty },
   ];
 
   // Use database fields when available (AI-generated), fall back to template
-  const categoryLabel = { laptops: 'laptop', chairs: 'chair', headphones: 'headphone system', accessories: 'computer accessory' }[product.category];
+  const categoryLabel = { laptops: 'laptop', chairs: 'chair', headphones: 'mobile phone', 'mobile phone': 'mobile phone', accessories: 'computer accessory' }[product.category];
   const templateOverview = `${product.name} is a ${categoryLabel} designed for people who want ${product.description.toLowerCase()}. It combines practical everyday use with the performance expected from its category.`;
 
   return {

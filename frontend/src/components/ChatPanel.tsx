@@ -9,11 +9,11 @@ import {
   sendMessage,
 } from '@/services/chatService';
 import type { ChatMessage, Product } from '@/types';
-import { formatPrice } from '@/types';
+import { formatPrice, displayCategory } from '@/types';
 
 const QUICK_ACTIONS = [
   '🎮 Gaming setup under $500',
-  '🎧 Best headphones',
+  '📱 Best mobile phones',
   '💻 Laptops for work',
   '💰 Budget accessories',
 ];
@@ -176,15 +176,13 @@ export default function ChatPanel({ onClose }: { onClose?: () => void }) {
                       key={product.id}
                       href={`/products/${product.id}`}
                       className="flex items-center gap-3 rounded-lg border border-border bg-surface p-2.5 hover:border-primary/30 transition-colors"
-                      target="_blank"
-                      rel="noopener noreferrer"
                     >
                       <div className="h-10 w-10 flex-shrink-0 rounded bg-background flex items-center justify-center text-lg">
-                        {product.category === 'laptops' ? '💻' : product.category === 'headphones' ? '🎧' : product.category === 'chairs' ? '🪑' : '📦'}
+                        {displayCategory(product.category) === 'laptops' ? '💻' : displayCategory(product.category) === 'mobile phone' ? '📱' : displayCategory(product.category) === 'chairs' ? '🪑' : '📦'}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-foreground truncate">{product.name}</div>
-                        <div className="text-xs text-text-muted">{product.category} · {formatPrice(product.price)}</div>
+                        <div className="text-xs text-text-muted">{displayCategory(product.category)} · {formatPrice(product.price)}</div>
                       </div>
                       <span className="text-xs text-primary">View →</span>
                     </a>

@@ -74,7 +74,7 @@ export default function FloatingChatWidget() {
   return (
     <div className="fixed bottom-6 left-6 z-50 max-sm:bottom-4 max-sm:left-4" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       {isOpen && (
-        <div className="mb-4 w-80 rounded-2xl border border-border bg-surface shadow-2xl max-sm:w-[calc(100vw-2rem)] overflow-hidden">
+        <div className="mb-4 w-80 rounded-2xl border border-border bg-surface shadow-2xl max-sm:fixed max-sm:inset-x-4 max-sm:bottom-20 max-sm:w-auto max-sm:rounded-xl overflow-hidden">
           {/* Tab toggle */}
           <div className="flex border-b border-border">
             <button
@@ -100,12 +100,12 @@ export default function FloatingChatWidget() {
 
           {/* Tab content */}
           {activeTab === 'chat' ? (
-            <div className="h-96">
+            <div className="h-96 max-sm:h-[60vh]">
               <ChatPanel />
             </div>
           ) : (
             <>
-              <div className="h-64 overflow-y-auto p-4">
+              <div className="h-64 max-sm:h-[50vh] overflow-y-auto p-4">
                 {messages.length === 0 && (
                   <div className="py-6 text-center">
                     <div className="text-3xl mb-2">💭</div>

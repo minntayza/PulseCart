@@ -4,7 +4,7 @@ export default function StatsRow() {
   const stats = [
     {
       label: 'Active Agents',
-      value: '2/3',
+      value: '4/6',
       change: 'All systems nominal',
       color: 'success',
       bgColor: 'bg-success-light',

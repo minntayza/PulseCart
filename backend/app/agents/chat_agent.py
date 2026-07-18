@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 import httpx
 from ..models.schemas import ChatResponse, Product
 from ..config import get_settings
@@ -102,16 +103,13 @@ def _api_chat(
             if isinstance(result_text, list):
                 result_text = result_text[0].get("text", "") if result_text else ""
 
-    # Strip markdown code blocks if present
+    # Strip markdown code blocks if present (```json ... ``` or ``` ... ```)
     result_text = result_text.strip()
-    if result_text.startswith("```"):
-        result_text = result_text.split("\n", 1)[1]
-    if result_text.endswith("```"):
-        result_text = result_text.rsplit("```", 1)[0]
+    result_text = re.sub(r'^```\w*\s*\n?', '', result_text)
+    result_text = re.sub(r'\n?```\s*$', '', result_text)
     result_text = result_text.strip()
 
     # Try to extract JSON block from the response (LLM may output text + JSON)
-    import re
     json_match = re.search(r'\{[\s\S]*"response"[\s\S]*\}', result_text)
     if json_match:
         try:
