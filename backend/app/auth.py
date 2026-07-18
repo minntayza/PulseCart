@@ -16,12 +16,13 @@ async def current_user(
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
     token = authorization.removeprefix("Bearer ").strip()
-    if settings.use_mock_data:
-        user = DEMO_USERS.get(token)
-        if not user:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid demo token")
+
+    # Try demo tokens first (works in both mock and real mode)
+    user = DEMO_USERS.get(token)
+    if user:
         return user
 
+    # Fall back to Supabase validation (handles real Supabase JWTs in any mode)
     if not settings.supabase_url or not settings.supabase_publishable_key:
         raise HTTPException(status_code=503, detail="Supabase authentication is not configured")
     try:

@@ -70,7 +70,8 @@ export interface FeedbackMessage {
   id: string;
   userId: string;
   message: string;
-  theme: 'delivery' | 'pricing' | 'quality';
+  theme: 'delivery' | 'pricing' | 'quality' | 'service' | 'other';
+  severity: 'low' | 'medium' | 'high';
   createdAt: string;
 }
 
@@ -116,4 +117,15 @@ export interface AuthUser {
   username: string;
   email: string;
   role: 'customer' | 'manager';
+}
+
+export interface FeedbackInsights {
+  themes: Array<{
+    theme: string;
+    severity: 'low' | 'medium' | 'high';
+    fixSuggestion: string;
+    messageCount: number;
+  }>;
+  totalMessages: number;
+  analyzedAt: string;
 }

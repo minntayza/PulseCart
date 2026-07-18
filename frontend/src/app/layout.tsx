@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import AppHeader from '@/components/AppHeader';
+import FloatingChatWidget from '@/components/FloatingChatWidget';
 import { AuthProvider } from '@/components/AuthProvider';
 
 export const metadata: Metadata = {
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <AuthProvider>
           <AppHeader />
           {children}
+          <FloatingChatWidget />
         </AuthProvider>
       </body>
     </html>
