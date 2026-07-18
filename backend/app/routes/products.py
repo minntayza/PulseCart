@@ -56,6 +56,9 @@ def generate_product_details(
         if settings.anthropic_base_url:
             client_kwargs["base_url"] = settings.anthropic_base_url
 
+        print(f"[generate-details] Connecting to: {settings.anthropic_base_url or 'https://api.anthropic.com'}")
+        print(f"[generate-details] Model: mimo-v2.5-pro")
+
         client = anthropic.Anthropic(**client_kwargs)
         message = client.messages.create(
             model="mimo-v2.5-pro",
@@ -88,9 +91,14 @@ def generate_product_details(
     except Exception as exc:
         # Surface full error from API proxy/Anthropic for debugging
         detail = str(exc)
+        status_code = 502
+        if hasattr(exc, 'status_code'):
+            status_code = getattr(exc, 'status_code') or 502
         if hasattr(exc, 'response'):
             resp = getattr(exc, 'response', None)
             if resp is not None:
-                body = getattr(resp, 'text', '') or getattr(resp, 'content', '')
-                detail = f"{detail} | response: {body[:500]}"
+                body = getattr(resp, 'text', '') or ''
+                headers = dict(getattr(resp, 'headers', {})) if hasattr(resp, 'headers') else {}
+                detail = f"status={status_code} body={body[:500]} headers={headers}"
+                print(f"[generate-details] API error: {detail}")
         raise HTTPException(status_code=502, detail=f"AI generation failed: {detail[:600]}") from exc
