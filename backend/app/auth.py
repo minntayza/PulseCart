@@ -42,7 +42,9 @@ async def current_user(
         )
     except HTTPException:
         raise
-    except Exception as exc:
+    except BaseException as exc:
+        import logging
+        logging.getLogger("auth").warning("Supabase auth validation failed: %s: %s", type(exc).__name__, exc)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired access token") from exc
 
 

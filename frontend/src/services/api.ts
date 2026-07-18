@@ -32,6 +32,10 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
       const headers = new Headers(requestInit?.headers);
       headers.set('Authorization', `Bearer ${data.session.access_token}`);
       response = await fetch(`${API_URL}${path}`, { ...requestInit, headers });
+    } else {
+      // Refresh failed — session is fully expired. Sign out to clear stale
+      // state immediately so the UI reflects the expired session.
+      await getSupabaseClient().auth.signOut();
     }
   }
 

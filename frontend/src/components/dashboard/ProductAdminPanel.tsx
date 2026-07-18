@@ -28,6 +28,7 @@ export default function ProductAdminPanel() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [stockFilter, setStockFilter] = useState<'all' | 'in-stock' | 'out-of-stock'>('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const update = (name: keyof typeof fields, value: string) => setFields((current) => ({ ...current, [name]: value }));
@@ -149,9 +150,13 @@ export default function ProductAdminPanel() {
   const input = 'mt-1.5 w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10 placeholder:text-text-muted shadow-sm';
   const labelClass = 'block text-sm font-medium text-text-secondary';
   const categories = ['all', ...Array.from(new Set(products.map((p) => p.category)))];
+  const outOfStockCount = products.filter((p) => (p.stock ?? 0) === 0).length;
   const filteredProducts = products.filter(
     (p) =>
       (selectedCategory === 'all' || p.category === selectedCategory) &&
+      (stockFilter === 'all' ||
+        (stockFilter === 'out-of-stock' && (p.stock ?? 0) === 0) ||
+        (stockFilter === 'in-stock' && (p.stock ?? 0) > 0)) &&
       p.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
@@ -164,19 +169,40 @@ export default function ProductAdminPanel() {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
             Add Product
           </button>
-          
-          <div className="relative">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"><path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" /></svg>
-            <input
-              type="search"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-border bg-surface pl-9 pr-4 py-2 text-sm outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10"
-            />
-          </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+          {/* Stock toggle */}
+          <div className="flex rounded-lg border border-border bg-background p-0.5">
+            {([
+              { key: 'all', label: 'All', count: products.length },
+              { key: 'in-stock', label: 'In stock', count: products.length - outOfStockCount },
+              { key: 'out-of-stock', label: 'Out of stock', count: outOfStockCount },
+            ] as const).map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setStockFilter(opt.key)}
+                className={`flex-1 flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                  stockFilter === opt.key
+                    ? opt.key === 'out-of-stock' && outOfStockCount > 0
+                      ? 'bg-danger/10 text-danger shadow-sm'
+                      : 'bg-surface text-foreground shadow-sm'
+                    : 'text-text-muted hover:text-foreground'
+                }`}
+              >
+                {opt.label}
+                <span className={`inline-flex items-center justify-center min-w-[16px] h-4 rounded-full px-1 text-[10px] font-bold ${
+                  stockFilter === opt.key
+                    ? opt.key === 'out-of-stock' && outOfStockCount > 0
+                      ? 'bg-danger/20 text-danger'
+                      : 'bg-primary/10 text-primary'
+                    : 'bg-border text-text-muted'
+                }`}>
+                  {opt.count}
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {categories.map((c) => (
               <button
                 key={c}
@@ -193,35 +219,45 @@ export default function ProductAdminPanel() {
             ))}
           </div>
         </div>
-        
-        <div className="overflow-y-auto p-2 space-y-1 flex-1 bg-surface-alt/30">
-          {filteredProducts.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => selectProduct(p)}
-              className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all flex flex-col gap-1 ${
-                selectedProduct?.id === p.id 
-                  ? 'bg-primary-light border border-primary/20 shadow-sm' 
-                  : 'hover:bg-border-light border border-transparent'
-              }`}
-            >
-              <span className={`font-medium ${selectedProduct?.id === p.id ? 'text-primary' : 'text-text-secondary'}`}>{p.name}</span>
-              <span className="text-xs text-text-muted">{p.category} • {formatPrice(p.price)}</span>
-            </button>
-          ))}
-          {filteredProducts.length === 0 && (
-            <div className="text-center py-8">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 mx-auto text-border mb-2"><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg>
-              <p className="text-sm text-text-muted">No products found</p>
-            </div>
-          )}
+        <div className="overflow-y-auto p-2 space-y-1">
+          {filteredProducts.map((p) => {
+            const isOutOfStock = (p.stock ?? 0) === 0;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => selectProduct(p)}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between gap-2 ${
+                  selectedProduct?.id === p.id
+                    ? 'bg-primary/10 text-primary font-bold'
+                    : isOutOfStock
+                      ? 'hover:bg-danger/5 text-text-muted'
+                      : 'hover:bg-surface-alt'
+                }`}
+              >
+                <span className={`truncate ${isOutOfStock ? 'line-through decoration-danger/30' : ''}`}>{p.name}</span>
+                {isOutOfStock && (
+                  <span className="shrink-0 text-[10px] font-bold bg-danger/10 text-danger px-1.5 py-0.5 rounded-full">
+                    0
+                  </span>
+                )}
+              </button>
+            );
+          })}
+          {filteredProducts.length === 0 && <p className="text-center text-xs text-text-muted mt-4">No products found</p>}
         </div>
       </aside>
 
-      {/* Center Panel: Form */}
-      <form onSubmit={submit} className="rounded-2xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col h-[750px]">
-        <div className="p-6 border-b border-border-light flex justify-between items-center bg-surface sticky top-0 z-10">
+      {/* Form */}
+      <form onSubmit={submit} className="space-y-4 rounded-2xl border border-border bg-surface p-5">
+        {selectedProduct && (selectedProduct.stock ?? 0) === 0 && (
+          <div className="flex items-center gap-2 rounded-xl border border-danger/20 bg-danger/5 px-3 py-2.5 text-sm text-danger animate-fade-in">
+            <span className="text-base">⚠️</span>
+            <span className="font-medium">This product is out of stock.</span>
+            <span className="text-danger/70 text-xs">Update the stock quantity above to make it available again.</span>
+          </div>
+        )}
+        <div className="flex justify-between items-center">
           <div>
             <h2 className="text-xl font-bold text-foreground">{selectedProduct ? 'Edit Product' : 'Add New Product'}</h2>
             <p className="text-sm text-text-muted mt-1">Configure product details and media.</p>

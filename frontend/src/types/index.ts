@@ -145,3 +145,32 @@ export interface GenerateDetailsResponse {
   bestFor: string[];
   limitations: string[];
 }
+
+export interface ChatConversation {
+  id: string;
+  userId: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  role: 'user' | 'assistant';
+  content: string;
+  productIds: string[];
+  createdAt: string;
+}
+
+export interface WantedProduct {
+  id: string;
+  userId: string;
+  productName: string;
+  description: string | null;
+  mentionCount: number;
+  conversationId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  status: 'pending' | 'stocked' | 'dismissed';
+}

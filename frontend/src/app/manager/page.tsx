@@ -6,6 +6,7 @@ import OrdersPanel from '@/components/dashboard/OrdersPanel';
 import MarketPanel from '@/components/dashboard/MarketPanel';
 import FeedbackPanel from '@/components/dashboard/FeedbackPanel';
 import AgentPanel from '@/components/dashboard/AgentPanel';
+import WantedPanel from '@/components/dashboard/WantedPanel';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import ProductAdminPanel from '@/components/dashboard/ProductAdminPanel';
@@ -16,6 +17,7 @@ const tabs = [
   { id: 'feedback', label: '💬 Feedback', icon: '💬' },
   { id: 'agents', label: '🤖 Agent Activity', icon: '🤖' },
   { id: 'products', label: 'Products', icon: '📦' },
+  { id: 'wanted', label: '🎯 Wanted', icon: '🎯' },
 ];
 
 export default function ManagerDashboard() {
@@ -71,14 +73,14 @@ export default function ManagerDashboard() {
             </div>
           </div>
 
-          {/* Tab Content */}
-          <div className="p-6">
-            {activeTab === 'orders' && <OrdersPanel />}
-            {activeTab === 'market' && <MarketPanel />}
-            {activeTab === 'feedback' && <FeedbackPanel />}
-            {activeTab === 'agents' && <AgentPanel />}
-            {activeTab === 'products' && <ProductAdminPanel />}
-          </div>
+        {/* Tab content */}
+        <div className="p-4">
+          {activeTab === 'orders' && <OrdersPanel />}
+          {activeTab === 'market' && <MarketPanel />}
+          {activeTab === 'feedback' && <FeedbackPanel />}
+          {activeTab === 'agents' && <AgentPanel />}
+          {activeTab === 'products' && <ProductAdminPanel />}
+          {activeTab === 'wanted' && <WantedPanel />}
         </div>
       </div>
     </div>

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-PulseCart is an agentic commerce operations copilot — a hackathon prototype demonstrating multi-agent orchestration in a shopping context. Three AI agents collaborate in real-time: a Recommender Agent (keyword-based product ranking), an Order Coordinator Agent (order processing + email delivery workflow), and a Feedback Agent (Anthropic API or keyword-based analysis).
+PulseCart is an agentic commerce operations copilot — a hackathon prototype demonstrating multi-agent orchestration in a shopping context. Four AI agents collaborate in real-time: a Recommender Agent (keyword-based product ranking), a Market Analyst Agent (competitor price comparison), an Order Coordinator Agent (order processing + email delivery workflow), and a Feedback Agent (Anthropic API or keyword-based analysis).
 
 ## Development Commands
 
@@ -31,6 +31,10 @@ pytest -q            # Run tests (backend/tests/test_day1.py)
 Default: `USE_MOCK_DATA=true` in `backend/.env`. Demo bearer tokens:
 - Customer: `Bearer demo-customer-token`
 - Manager: `Bearer demo-manager-token`
+
+Demo accounts (Supabase auth):
+- Manager: `manager@pulsecart.demo` / `Manager123!`
+- Customer: `customer@pulsecart.demo` / `Customer123!`
 
 ### Enable Supabase
 1. Create Supabase project
@@ -87,6 +91,7 @@ PulseCart/
 
 **Agent System:**
 - **RecommenderAgent** (`recommender.py`): `rank_products()` — keyword scoring (name 5pts, category 3pts, description 2pts)
+- **MarketAnalystAgent** (`market_analyst.py`): competitor price comparison analysis
 - **OrderCoordinatorAgent** (`order_coordinator.py`): `order_trace()`, `complete_delivery()`, `notify_rejection()` — order lifecycle + email
 - **FeedbackAgent** (`feedback_agent.py`): `analyze_feedback()` — Anthropic Messages API (`mimo-v2.5-pro` model) with keyword-based fallback
 
@@ -142,7 +147,9 @@ cp frontend/.env.local.example frontend/.env.local
 
 ### Important Patterns
 
-**Frontend Service Layer:** Components call service functions that use mock implementations by default. Backend integration replaces service internals without rewriting UI components.
+**Frontend Service Layer:** Components call service functions that use mock implementations by default. Backend integration replaces service internals without rewriting UI components. Client-side mock state is persisted via `storage.ts` (localStorage/sessionStorage wrappers).
+
+**GSD Workflow:** This project uses GSD workflow enforcement. Before making file changes, start work through a GSD command (`/gsd-quick`, `/gsd-debug`, `/gsd-execute-phase`) unless the user explicitly bypasses it.
 
 **Auth Flow:** Frontend Supabase Auth → session storage → role-based UI. Backend: Bearer token → demo token check → Supabase `get_user()` with role from `app_metadata`.
 

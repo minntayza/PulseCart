@@ -4,7 +4,7 @@ from threading import Lock
 from uuid import uuid4
 from fastapi import HTTPException
 from .fixtures import PRODUCTS
-from .models.schemas import AgentTrace, AuthUser, CreateFeedbackRequest, CreateOrderRequest, Feedback, FeedbackInsights, Order, OrderItem, Product, UpdateOrderStatusRequest
+from .models.schemas import AgentTrace, AuthUser, ChatConversation, ChatMessage, CreateFeedbackRequest, CreateOrderRequest, Feedback, FeedbackInsights, Order, OrderItem, Product, UpdateOrderStatusRequest, WantedProduct
 from .config import get_settings
 from .agents.feedback_agent import classify_feedback_theme
 
@@ -17,6 +17,9 @@ class MemoryRepository:
         self.feedback: list[Feedback] = []
         self.email_outbox: dict[str, dict] = {}
         self.insights: list[FeedbackInsights] = []
+        self.conversations: list[ChatConversation] = []
+        self.messages: list[ChatMessage] = []
+        self.wanted_products: list[WantedProduct] = []
         self._lock = Lock()
 
     def list_products(self) -> list[Product]:
@@ -175,6 +178,69 @@ class MemoryRepository:
 
     def get_insights(self) -> FeedbackInsights | None:
         return self.insights[0] if self.insights else None
+
+    # ── Chat ──────────────────────────────────────────────
+
+    def create_conversation(self, user_id: str, title: str) -> ChatConversation:
+        now = datetime.now(timezone.utc).isoformat()
+        conv = ChatConversation(id=f"CONV-{uuid4().hex[:8].upper()}", userId=user_id, title=title, createdAt=now, updatedAt=now)
+        with self._lock:
+            self.conversations.insert(0, conv)
+        return conv
+
+    def list_conversations(self, user_id: str) -> list[ChatConversation]:
+        return [c for c in self.conversations if c.userId == user_id]
+
+    def get_conversation(self, conversation_id: str) -> ChatConversation | None:
+        return next((c for c in self.conversations if c.id == conversation_id), None)
+
+    def get_messages(self, conversation_id: str) -> list[ChatMessage]:
+        return [m for m in self.messages if m.conversationId == conversation_id]
+
+    def add_message(self, conversation_id: str, role: str, content: str, product_ids: list[str]) -> ChatMessage:
+        now = datetime.now(timezone.utc).isoformat()
+        msg = ChatMessage(
+            id=f"MSG-{uuid4().hex[:8].upper()}", conversationId=conversation_id,
+            role=role, content=content, productIds=product_ids, createdAt=now,
+        )
+        with self._lock:
+            self.messages.append(msg)
+            # Update conversation timestamp
+            for c in self.conversations:
+                if c.id == conversation_id:
+                    c.updatedAt = now
+                    break
+        return msg
+
+    def upsert_wanted_product(self, user_id: str, product_name: str, description: str | None, conversation_id: str | None) -> WantedProduct:
+        normalized = " ".join(product_name.lower().split())
+        with self._lock:
+            existing = next((w for w in self.wanted_products if w.productName == normalized), None)
+            if existing:
+                existing.mentionCount += 1
+                existing.updatedAt = datetime.now(timezone.utc).isoformat()
+                return existing
+            now = datetime.now(timezone.utc).isoformat()
+            wp = WantedProduct(
+                id=f"WP-{uuid4().hex[:8].upper()}", userId=user_id,
+                productName=normalized, description=description or "",
+                mentionCount=1, conversationId=conversation_id,
+                createdAt=now, updatedAt=now, status="pending",
+            )
+            self.wanted_products.insert(0, wp)
+            return wp
+
+    def list_wanted_products(self) -> list[WantedProduct]:
+        return sorted(self.wanted_products, key=lambda w: -w.mentionCount)
+
+    def update_wanted_status(self, wanted_id: str, status: str) -> WantedProduct:
+        with self._lock:
+            for wp in self.wanted_products:
+                if wp.id == wanted_id:
+                    wp.status = status  # type: ignore[assignment]
+                    wp.updatedAt = datetime.now(timezone.utc).isoformat()
+                    return wp
+        raise HTTPException(status_code=404, detail="Wanted product not found")
 
 
 repository = MemoryRepository()
@@ -366,6 +432,70 @@ class SupabaseRepository:
 
     def get_insights(self) -> FeedbackInsights | None:
         return self.insights[0] if self.insights else None
+
+    # ── Chat ──────────────────────────────────────────────
+
+    def create_conversation(self, user_id: str, title: str) -> ChatConversation:
+        now = datetime.now(timezone.utc).isoformat()
+        response = self.client.table("chat_conversations").insert({
+            "user_id": user_id, "title": title,
+        }).execute()
+        row = response.data[0]
+        return ChatConversation(id=str(row["id"]), userId=row["user_id"], title=row["title"], createdAt=row["created_at"], updatedAt=row["updated_at"])
+
+    def list_conversations(self, user_id: str) -> list[ChatConversation]:
+        response = self.client.table("chat_conversations").select("*").eq("user_id", user_id).order("updated_at", desc=True).execute()
+        return [ChatConversation(id=str(r["id"]), userId=r["user_id"], title=r["title"], createdAt=r["created_at"], updatedAt=r["updated_at"]) for r in response.data]
+
+    def get_conversation(self, conversation_id: str) -> ChatConversation | None:
+        response = self.client.table("chat_conversations").select("*").eq("id", conversation_id).maybe_single().execute()
+        if not response.data:
+            return None
+        r = response.data
+        return ChatConversation(id=str(r["id"]), userId=r["user_id"], title=r["title"], createdAt=r["created_at"], updatedAt=r["updated_at"])
+
+    def get_messages(self, conversation_id: str) -> list[ChatMessage]:
+        response = self.client.table("chat_messages").select("*").eq("conversation_id", conversation_id).order("created_at").execute()
+        return [ChatMessage(id=str(r["id"]), conversationId=r["conversation_id"], role=r["role"], content=r["content"], productIds=r.get("product_ids") or [], createdAt=r["created_at"]) for r in response.data]
+
+    def add_message(self, conversation_id: str, role: str, content: str, product_ids: list[str]) -> ChatMessage:
+        response = self.client.table("chat_messages").insert({
+            "conversation_id": conversation_id, "role": role,
+            "content": content, "product_ids": product_ids,
+        }).execute()
+        # Update conversation timestamp
+        self.client.table("chat_conversations").update({"updated_at": datetime.now(timezone.utc).isoformat()}).eq("id", conversation_id).execute()
+        r = response.data[0]
+        return ChatMessage(id=str(r["id"]), conversationId=r["conversation_id"], role=r["role"], content=r["content"], productIds=r.get("product_ids") or [], createdAt=r["created_at"])
+
+    def upsert_wanted_product(self, user_id: str, product_name: str, description: str | None, conversation_id: str | None) -> WantedProduct:
+        normalized = " ".join(product_name.lower().split())
+        existing = self.client.table("wanted_products").select("*").eq("product_name", normalized).maybe_single().execute()
+        if existing and existing.data:
+            new_count = (existing.data["mention_count"] or 0) + 1
+            self.client.table("wanted_products").update({
+                "mention_count": new_count, "updated_at": datetime.now(timezone.utc).isoformat(),
+            }).eq("id", existing.data["id"]).execute()
+            r = existing.data
+            r["mention_count"] = new_count
+            return WantedProduct(id=str(r["id"]), userId=r["user_id"], productName=r["product_name"], description=r.get("description"), mentionCount=r["mention_count"], conversationId=r.get("conversation_id"), createdAt=r["created_at"], updatedAt=r["updated_at"], status=r["status"])
+        response = self.client.table("wanted_products").insert({
+            "user_id": user_id, "product_name": normalized,
+            "description": description or "", "conversation_id": conversation_id,
+        }).execute()
+        r = response.data[0]
+        return WantedProduct(id=str(r["id"]), userId=r["user_id"], productName=r["product_name"], description=r.get("description"), mentionCount=r["mention_count"], conversationId=r.get("conversation_id"), createdAt=r["created_at"], updatedAt=r["updated_at"], status=r["status"])
+
+    def list_wanted_products(self) -> list[WantedProduct]:
+        response = self.client.table("wanted_products").select("*").order("mention_count", desc=True).execute()
+        return [WantedProduct(id=str(r["id"]), userId=r["user_id"], productName=r["product_name"], description=r.get("description"), mentionCount=r["mention_count"], conversationId=r.get("conversation_id"), createdAt=r["created_at"], updatedAt=r["updated_at"], status=r["status"]) for r in response.data]
+
+    def update_wanted_status(self, wanted_id: str, status: str) -> WantedProduct:
+        response = self.client.table("wanted_products").update({"status": status, "updated_at": datetime.now(timezone.utc).isoformat()}).eq("id", wanted_id).execute()
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Wanted product not found")
+        r = response.data[0]
+        return WantedProduct(id=str(r["id"]), userId=r["user_id"], productName=r["product_name"], description=r.get("description"), mentionCount=r["mention_count"], conversationId=r.get("conversation_id"), createdAt=r["created_at"], updatedAt=r["updated_at"], status=r["status"])
 
 
 def get_repository() -> MemoryRepository | SupabaseRepository:
