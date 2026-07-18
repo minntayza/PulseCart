@@ -124,7 +124,19 @@ export default function WantedPanel() {
       .finally(() => setLoading(false));
   }, [accessToken]);
 
+  /* Initial load */
   useEffect(load, [load]);
+
+  /* Auto-refresh every 10 seconds (silent — no loading spinner) */
+  useEffect(() => {
+    if (!accessToken) return;
+    const interval = setInterval(() => {
+      getWantedProducts(accessToken)
+        .then(setItems)
+        .catch(() => {}); // silent — ignore transient errors
+    }, 10_000);
+    return () => clearInterval(interval);
+  }, [accessToken]);
 
   /* Derived counts */
   const counts = useMemo(() => {
