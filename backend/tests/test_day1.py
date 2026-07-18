@@ -1,12 +1,33 @@
 from fastapi.testclient import TestClient
 from app.main import app
 from app.models.schemas import Order
-from app.repository import repository
+from app.repository import SupabaseRepository, repository
 from app.services.email import delivery_email_html, rejection_email_html
 
 client = TestClient(app)
 customer = {"Authorization": "Bearer demo-customer-token"}
 manager = {"Authorization": "Bearer demo-manager-token"}
+
+
+def test_supabase_repository_disables_http2(monkeypatch):
+    captured = {}
+
+    class FakeClient:
+        pass
+
+    def fake_create_client(url, key, options):
+        captured.update(url=url, key=key, options=options)
+        return FakeClient()
+
+    monkeypatch.setattr("supabase.create_client", fake_create_client)
+    repo = SupabaseRepository("https://example.supabase.co", "secret", storage_timeout=15)
+
+    try:
+        assert captured["options"].httpx_client is repo._http_client
+        assert captured["options"].postgrest_client_timeout == 15
+        assert repo._http_client._transport._pool._http2 is False
+    finally:
+        repo._http_client.close()
 
 
 def test_health_and_products():
