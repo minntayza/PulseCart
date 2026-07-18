@@ -93,6 +93,8 @@ def generate_product_details(
             )
 
         data = resp.json()
+        print(f"[generate-details] Response keys: {list(data.keys())}")
+        print(f"[generate-details] Response snippet: {json.dumps(data)[:500]}")
         text = data["content"][0]["text"].strip()
         # Strip markdown fences if present
         if text.startswith("```"):
