@@ -20,7 +20,6 @@ export interface Product {
   bestFor?: string[];
   limitations?: string[];
   specifications?: ProductSpecification[];
-  deliveryEstimate?: string;
   warranty?: string;
   isActive?: boolean;
 }
@@ -46,7 +45,6 @@ export interface ProductDetails {
   limitations: string[];
   specifications: ProductSpecification[];
   stock: number;
-  deliveryEstimate: string;
   warranty: string;
 }
 
