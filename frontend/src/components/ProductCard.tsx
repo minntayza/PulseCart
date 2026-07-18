@@ -8,8 +8,7 @@ interface ProductCardProps { product: Product; onAddToCart: (product: Product) =
 const visuals: Record<string, { symbol: string; gradient: string }> = {
   laptops: { symbol: '▰', gradient: 'from-indigo-100 via-violet-50 to-slate-100' },
   chairs: { symbol: '⌑', gradient: 'from-amber-100 via-orange-50 to-stone-100' },
-  headphones: { symbol: '📱', gradient: 'from-emerald-100 via-teal-50 to-slate-100' },
-  'mobile phone': { symbol: '📱', gradient: 'from-emerald-100 via-teal-50 to-slate-100' },
+  headphones: { symbol: '🎧', gradient: 'from-emerald-100 via-teal-50 to-slate-100' },
   accessories: { symbol: '✦', gradient: 'from-sky-100 via-cyan-50 to-slate-100' },
 };
 

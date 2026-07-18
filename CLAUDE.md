@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-PulseCart is an agentic commerce operations copilot — a hackathon prototype demonstrating multi-agent orchestration in a shopping context. Four AI agents collaborate in real-time: a Recommender Agent (keyword-based product ranking), a Market Analyst Agent (competitor price comparison), an Order Coordinator Agent (order processing + email delivery workflow), and a Feedback Agent (Anthropic API or keyword-based analysis).
+PulseCart is an agentic commerce operations copilot — a hackathon prototype demonstrating multi-agent orchestration in a shopping context. Five AI agents collaborate in real-time: a Recommender Agent (keyword-based product ranking), a Market Analyst Agent (competitor price comparison), an Order Coordinator Agent (order processing + email delivery workflow), a Feedback Agent (Anthropic API or keyword-based analysis), and a Chat Agent (conversational AI with tool-use).
 
 ## Development Commands
 
@@ -38,7 +38,7 @@ Demo accounts (Supabase auth):
 
 ### Enable Supabase
 1. Create Supabase project
-2. Run SQL migrations in order: `sql/001_day1_schema.sql` → `002_auth_profile_trigger.sql` → `003_product_catalog_and_storage.sql` → `004_order_delivery.sql`
+2. Run SQL migrations in order: `sql/001_day1_schema.sql` → `002_auth_profile_trigger.sql` → `003_product_catalog_and_storage.sql` → `004_order_delivery.sql` → `005_chat_and_wanted_products.sql`
 3. Set `USE_MOCK_DATA=false` in `backend/.env`
 4. Seed products: `python scripts/seed.py`
 5. Promote manager: `python scripts/set_user_role.py manager@example.com manager`
@@ -51,21 +51,21 @@ PulseCart/
 ├── frontend/           # Next.js 16 app
 │   ├── src/
 │   │   ├── app/        # 6 routes (App Router): /, /login, /register, /products/[id], /account/orders, /manager
-│   │   ├── components/ # 17 components (11 top-level + 6 in dashboard/)
+│   │   ├── components/ # 18 components (12 top-level + 6 in dashboard/)
 │   │   ├── data/       # Fixture files: products, productDetails, competitors, feedback, agents
-│   │   ├── services/   # 9 services (api, auth, feedback, managerProduct, order, product, search, storage, supabase)
-│   │   └── types/      # 15 TypeScript interfaces + formatPrice() utility
+│   │   ├── services/   # 10 services (api, auth, chat, feedback, managerProduct, order, product, search, storage, supabase)
+│   │   └── types/      # 20 TypeScript interfaces + formatPrice() utility
 ├── backend/            # FastAPI Python app
 │   ├── app/
-│   │   ├── agents/     # 3 agents: recommender, order_coordinator, feedback_agent
-│   │   ├── routes/     # 6 route files: products, search, orders, feedback, agents, manager_products
-│   │   ├── models/     # 15 Pydantic schemas
+│   │   ├── agents/     # 5 agents: recommender, market_analyst, order_coordinator, feedback_agent, chat_agent
+│   │   ├── routes/     # 7 route files: products, search, orders, feedback, agents, manager_products, chat
+│   │   ├── models/     # 23 Pydantic schemas
 │   │   ├── services/   # email.py (SMTP delivery/rejection emails in Burmese)
 │   │   ├── auth.py     # Demo tokens + Supabase auth validation
 │   │   ├── config.py   # pydantic-settings (17 config fields)
 │   │   ├── repository.py  # Dual pattern: MemoryRepository + SupabaseRepository
 │   │   └── fixtures.py # Mock product data
-│   ├── sql/            # 4 migration files (001-004)
+│   ├── sql/            # 5 migration files (001-005)
 │   ├── scripts/        # seed.py, set_user_role.py
 │   └── tests/          # test_day1.py
 └── .planning/          # Project docs, roadmap, sketches
@@ -79,6 +79,7 @@ PulseCart/
 - 17 color tokens defined in `globals.css` (`:root` for light, `[data-theme="dark"]` for dark)
 - Browser-only mock services using localStorage/sessionStorage (wrapped in `storage.ts`)
 - Real-time agent activity feed with trace visualization
+- Floating chat widget (`FloatingChatWidget.tsx` + `ChatPanel.tsx`) for AI agent conversations
 - Role-based access: customer vs manager views
 
 **Backend:**
@@ -94,14 +95,15 @@ PulseCart/
 - **MarketAnalystAgent** (`market_analyst.py`): competitor price comparison analysis
 - **OrderCoordinatorAgent** (`order_coordinator.py`): `order_trace()`, `complete_delivery()`, `notify_rejection()` — order lifecycle + email
 - **FeedbackAgent** (`feedback_agent.py`): `analyze_feedback()` — Anthropic Messages API (`mimo-v2.5-pro` model) with keyword-based fallback
+- **ChatAgent** (`chat_agent.py`): conversational AI agent using Anthropic API with tool-use for product lookup, order status, and search
 
 **Database (Supabase):**
-- 9 tables: profiles, products, searches, orders, order_items, audit_log, feedback, email_outbox + auth.users
+- 11 tables: profiles, products, searches, orders, order_items, audit_log, feedback, email_outbox, chat_conversations, chat_messages, wanted_products + auth.users
 - pgvector for embeddings (schema-ready)
 - RLS policies per table
 - Storage bucket `product-images` for product images
 
-### API Endpoints (14 total)
+### API Endpoints (16 total)
 
 **Public:**
 - `GET /health` — Health check
@@ -113,6 +115,7 @@ PulseCart/
 - `POST /orders` — Create order
 - `GET /orders/me` — Order history
 - `POST /feedback` — Submit feedback
+- `POST /chat` — Chat with AI agent (streaming)
 
 **Manager Only:**
 - `GET /manager/orders` — Pending orders
@@ -142,12 +145,14 @@ cp frontend/.env.local.example frontend/.env.local
 **Backend** (`backend/.env`):
 - `USE_MOCK_DATA` — Enable/disable mock mode (default `true`)
 - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` — Supabase credentials
-- `ANTHROPIC_API_KEY` — For feedback agent's LLM analysis (optional, falls back to keyword analysis)
+- `ANTHROPIC_API_KEY` — For feedback agent and chat agent LLM analysis (optional, falls back to keyword analysis)
+- `ANTHROPIC_BASE_URL` — Custom Anthropic API base URL (optional)
+- `CHAT_MODEL` — Model for chat agent (default `mimo-v2.5-pro`)
 - `EMAIL_ENABLED`, `SMTP_*` — Email delivery settings (default disabled)
 
 ### Important Patterns
 
-**Frontend Service Layer:** Components call service functions that use mock implementations by default. Backend integration replaces service internals without rewriting UI components. Client-side mock state is persisted via `storage.ts` (localStorage/sessionStorage wrappers).
+**Frontend Service Layer:** Components call service functions that use mock implementations by default. Backend integration replaces service internals without rewriting UI components. Client-side mock state is persisted via `storage.ts` (localStorage/sessionStorage wrappers). Chat uses streaming via `chatService.ts`.
 
 **GSD Workflow:** This project uses GSD workflow enforcement. Before making file changes, start work through a GSD command (`/gsd-quick`, `/gsd-debug`, `/gsd-execute-phase`) unless the user explicitly bypasses it.
 

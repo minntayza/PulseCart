@@ -4,7 +4,7 @@
 
 **Agentic Shopping Web App**
 
-A hackathon prototype demonstrating multi-agent orchestration in a shopping context. Four AI agents collaborate in real-time: a Personalization Agent (vector embeddings for recommendations), a Competitor Analysis Agent (price comparison), a Purchase Workflow Agent (order processing), and a Feedback Agent (user insight aggregation). The demo proves that autonomous agents can replace manual e-commerce operations.
+A hackathon prototype demonstrating multi-agent orchestration in a shopping context. Five AI agents collaborate in real-time: a Personalization Agent (vector embeddings for recommendations), a Competitor Analysis Agent (price comparison), a Purchase Workflow Agent (order processing), a Feedback Agent (user insight aggregation), and a Chat Agent (conversational AI with tool-use). The demo proves that autonomous agents can replace manual e-commerce operations.
 <!-- GSD:project-end -->
 
 <!-- GSD:stack-start source:STACK.md -->
@@ -33,7 +33,7 @@ A hackathon prototype demonstrating multi-agent orchestration in a shopping cont
 
 ## Architecture
 
-Monorepo with `frontend/` (Next.js App Router) and `backend/` (FastAPI). Backend uses a dual repository pattern: `MemoryRepository` for mock mode, `SupabaseRepository` for production. Four AI agents (recommender, market_analyst, order_coordinator, feedback_agent) are standalone Python functions. Frontend services abstract API calls with localStorage-backed mock implementations.
+Monorepo with `frontend/` (Next.js App Router) and `backend/` (FastAPI). Backend uses a dual repository pattern: `MemoryRepository` for mock mode, `SupabaseRepository` for production. Five AI agents (recommender, market_analyst, order_coordinator, feedback_agent, chat_agent) are standalone Python functions. Frontend services abstract API calls with localStorage-backed mock implementations.
 <!-- GSD:architecture-end -->
 
 <!-- GSD:skills-start source:skills/ -->

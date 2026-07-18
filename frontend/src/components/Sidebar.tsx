@@ -9,7 +9,7 @@ const categories = [
   { id: 'all', label: 'All', count: 12 },
   { id: 'laptops', label: 'Laptops', count: 2 },
   { id: 'chairs', label: 'Chairs', count: 3 },
-  { id: 'mobile phone', label: 'Mobile Phones', count: 2 },
+  { id: 'headphones', label: 'Headphones', count: 2 },
   { id: 'accessories', label: 'Accessories', count: 5 },
 ];
 

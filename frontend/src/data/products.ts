@@ -26,9 +26,9 @@ export const products: Product[] = [
   {
     id: '3',
     name: 'Sony WH-1000XM5 Headphones',
-    category: 'mobile phone',
+    category: 'headphones',
     price: 349.99,
-    image: '📱',
+    image: '🎧',
     description: 'Industry-leading noise cancellation',
     rating: 4.9,
     reviews: 567,
@@ -88,9 +88,9 @@ export const products: Product[] = [
   {
     id: '9',
     name: 'SteelSeries Arctis Nova Pro',
-    category: 'mobile phone',
+    category: 'headphones',
     price: 349.99,
-    image: '📱',
+    image: '🎧',
     description: 'Wireless gaming headset with ANC',
     rating: 4.7,
     reviews: 211,

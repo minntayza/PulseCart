@@ -104,7 +104,7 @@ export default function OrdersPanel() {
                 <span className="text-3xl text-foreground/70 select-none">
                   {displayCategory(order.items[0]?.category ?? '') === 'laptops' ? '▰' :
                    displayCategory(order.items[0]?.category ?? '') === 'chairs' ? '⌑' :
-                   displayCategory(order.items[0]?.category ?? '') === 'mobile phone' ? '📱' :
+                   displayCategory(order.items[0]?.category ?? '') === 'headphones' ? '🎧' :
                    displayCategory(order.items[0]?.category ?? '') === 'accessories' ? '✦' : '📦'}
                 </span>
               )}
