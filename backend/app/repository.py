@@ -4,7 +4,7 @@ from threading import Lock
 from uuid import uuid4
 from fastapi import HTTPException
 from .fixtures import PRODUCTS
-from .models.schemas import AgentTrace, AuthUser, CreateFeedbackRequest, CreateOrderRequest, Feedback, Order, OrderItem, Product, UpdateOrderStatusRequest
+from .models.schemas import AgentTrace, AuthUser, CreateFeedbackRequest, CreateOrderRequest, Feedback, FeedbackInsights, Order, OrderItem, Product, UpdateOrderStatusRequest
 from .config import get_settings
 
 
@@ -15,6 +15,7 @@ class MemoryRepository:
         self.traces: list[AgentTrace] = []
         self.feedback: list[Feedback] = []
         self.email_outbox: dict[str, dict] = {}
+        self.insights: list[FeedbackInsights] = []
         self._lock = Lock()
 
     def list_products(self) -> list[Product]:
@@ -162,6 +163,14 @@ class MemoryRepository:
     def list_feedback(self) -> list[Feedback]:
         return list(self.feedback)
 
+    def save_insights(self, insights: FeedbackInsights) -> None:
+        with self._lock:
+            self.insights.insert(0, insights)
+            self.insights = self.insights[:10]
+
+    def get_insights(self) -> FeedbackInsights | None:
+        return self.insights[0] if self.insights else None
+
 
 repository = MemoryRepository()
 
@@ -174,6 +183,8 @@ class SupabaseRepository:
             secret_key,
             options=ClientOptions(storage_client_timeout=storage_timeout),
         )
+        self.insights: list[FeedbackInsights] = []
+        self._lock = Lock()
 
     @staticmethod
     def _product(row: dict) -> Product:
@@ -338,6 +349,14 @@ class SupabaseRepository:
     def list_feedback(self) -> list[Feedback]:
         response = self.client.table("feedback").select("*").order("created_at", desc=True).execute()
         return [Feedback(id=str(row["id"]), userId=row["user_id"], message=row["message"], theme=row["theme"], severity=row["severity"], createdAt=row["created_at"]) for row in response.data]
+
+    def save_insights(self, insights: FeedbackInsights) -> None:
+        with self._lock:
+            self.insights.insert(0, insights)
+            self.insights = self.insights[:10]
+
+    def get_insights(self) -> FeedbackInsights | None:
+        return self.insights[0] if self.insights else None
 
 
 def get_repository() -> MemoryRepository | SupabaseRepository:

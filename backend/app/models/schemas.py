@@ -113,3 +113,16 @@ class Feedback(BaseModel):
     theme: Literal["delivery", "pricing", "quality", "service", "other"] = "other"
     severity: Literal["low", "medium", "high"] = "low"
     createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class FeedbackTheme(BaseModel):
+    theme: str
+    severity: Literal["low", "medium", "high"]
+    fixSuggestion: str
+    messageCount: int
+
+
+class FeedbackInsights(BaseModel):
+    themes: list[FeedbackTheme]
+    totalMessages: int
+    analyzedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
