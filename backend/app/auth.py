@@ -50,3 +50,12 @@ async def manager_user(user: AuthUser = Depends(current_user)) -> AuthUser:
     if user.role != "manager":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Manager access required")
     return user
+
+
+async def optional_user(
+    authorization: str | None = Header(default=None),
+    settings: Settings = Depends(get_settings),
+) -> AuthUser | None:
+    if not authorization:
+        return None
+    return await current_user(authorization, settings)

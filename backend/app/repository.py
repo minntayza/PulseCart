@@ -17,6 +17,8 @@ class MemoryRepository:
         self.feedback: list[Feedback] = []
         self.email_outbox: dict[str, dict] = {}
         self.insights: list[FeedbackInsights] = []
+        self.profiles: dict[str, dict[str, float]] = {}
+        self.searches: list[dict] = []
         self._lock = Lock()
 
     def list_products(self) -> list[Product]:
@@ -72,9 +74,18 @@ class MemoryRepository:
                     return
         raise HTTPException(status_code=404, detail="Product not found")
 
-    def add_trace(self, trace: AgentTrace) -> None:
+    def add_trace(self, trace: AgentTrace, actor_id: str | None = None) -> None:
         with self._lock:
             self.traces = [trace, *self.traces][:100]
+
+    def get_profile(self, user_id: str) -> dict[str, float]:
+        return dict(self.profiles.get(user_id, {}))
+
+    def save_profile(self, user_id: str, interests: dict[str, float]) -> None:
+        self.profiles[user_id] = dict(interests)
+
+    def record_search(self, user_id: str, query: str) -> None:
+        self.searches.insert(0, {"user_id": user_id, "query": query})
 
     def create_order(self, user: AuthUser, payload: CreateOrderRequest) -> Order:
         lines: list[OrderItem] = []
@@ -235,11 +246,23 @@ class SupabaseRepository:
         if not response.data:
             raise HTTPException(status_code=404, detail="Product not found")
 
-    def add_trace(self, trace: AgentTrace) -> None:
+    def add_trace(self, trace: AgentTrace, actor_id: str | None = None) -> None:
         self.client.table("audit_log").insert({
             "agent_name": trace.agentName, "action": trace.lastAction,
-            "input": {}, "output": trace.model_dump(mode="json"),
+            "input": {}, "output": trace.model_dump(mode="json"), "actor_id": actor_id,
         }).execute()
+
+    def get_profile(self, user_id: str) -> dict[str, float]:
+        response = self.client.table("profiles").select("interests").eq("user_id", user_id).maybe_single().execute()
+        return dict((response.data or {}).get("interests") or {})
+
+    def save_profile(self, user_id: str, interests: dict[str, float]) -> None:
+        self.client.table("profiles").update({
+            "interests": interests, "updated_at": datetime.now(timezone.utc).isoformat(),
+        }).eq("user_id", user_id).execute()
+
+    def record_search(self, user_id: str, query: str) -> None:
+        self.client.table("searches").insert({"user_id": user_id, "query": query}).execute()
 
     def create_order(self, user: AuthUser, payload: CreateOrderRequest) -> Order:
         lines: list[OrderItem] = []

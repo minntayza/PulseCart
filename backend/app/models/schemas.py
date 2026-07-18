@@ -57,6 +57,7 @@ class SearchRequest(BaseModel):
 class SearchResponse(BaseModel):
     products: list[Product]
     trace: AgentTrace
+    profileUpdate: dict[str, float] = Field(default_factory=dict)
 
 
 class OrderItemInput(BaseModel):

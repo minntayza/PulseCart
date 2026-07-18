@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import get_settings
-from .routes import agents, feedback, manager_products, orders, products, search
+from .routes import agents, events, feedback, manager_products, orders, products, search
 
 settings = get_settings()
 api = FastAPI(title=settings.app_name, version="0.1.0")
@@ -14,6 +14,7 @@ api.add_middleware(
 )
 api.include_router(products.router)
 api.include_router(search.router)
+api.include_router(events.router)
 api.include_router(orders.router)
 api.include_router(agents.router)
 api.include_router(feedback.router)
