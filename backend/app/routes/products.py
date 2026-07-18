@@ -8,13 +8,18 @@ from ..repository import MemoryRepository, SupabaseRepository, get_repository
 router = APIRouter(prefix="/products", tags=["products"])
 
 DETAILS_SYSTEM_PROMPT = """You are a product copywriter for an e-commerce store called PulseCart.
-Given a product name, category, and short description, generate the following fields as JSON:
-- overview: A 2-3 sentence product overview suitable for a product detail page.
-- howItWorks: A 2-3 sentence explanation of how the product works or what it does.
-- bestFor: An array of 3-4 strings describing who or what this product is best for.
-- limitations: An array of 2-3 strings describing limitations or considerations.
+Given a product's name, category, and manager-written description, generate these fields as JSON:
 
-Return ONLY valid JSON with these 4 keys. No markdown, no explanation."""
+- overview: A polished 2-3 sentence product overview for the product detail page. Expand on the description naturally.
+- howItWorks: A 2-3 sentence explanation of how the product works or what it does.
+- bestFor: An array of 3-4 short strings describing ideal use cases or audiences.
+- limitations: An array of 2-3 short strings describing limitations or things to consider.
+
+Rules:
+- Return ONLY valid JSON. No markdown fences, no explanation.
+- The "overview" should be a refined, professional version of the input description.
+- Keep each string concise (under 100 characters).
+- The JSON must have exactly these 4 keys: overview, howItWorks, bestFor, limitations."""
 
 
 @router.get("", response_model=list[Product])
@@ -67,7 +72,11 @@ def generate_product_details(
             "messages": [
                 {
                     "role": "user",
-                    "content": f"Product name: {body.name}\nCategory: {body.category}\nDescription: {body.description}",
+                    "content": (
+                        f"Product Name: {body.name}\n"
+                        f"Category: {body.category}\n"
+                        f"Manager Description: {body.description}"
+                    ),
                 }
             ],
         }
