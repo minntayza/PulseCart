@@ -58,7 +58,7 @@ def generate_product_details(
 
         client = anthropic.Anthropic(**client_kwargs)
         message = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="mimo-v2.5-pro",
             max_tokens=1024,
             system=DETAILS_SYSTEM_PROMPT,
             messages=[
