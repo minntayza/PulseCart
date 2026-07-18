@@ -1,15 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Product, formatPrice } from '@/types';
 import { readCart, writeCart } from '@/services/storage';
 
 export default function ProductDetailActions({ product, stock }: { product: Product; stock: number }) {
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(stock > 0 ? 1 : 0);
   const [added, setAdded] = useState(false);
-  const isOutOfStock = stock === 0;
+
+  useEffect(() => {
+    if (stock === 0) setQuantity(0);
+    else if (quantity > stock) setQuantity(stock);
+    else if (quantity === 0 && stock > 0) setQuantity(1);
+  }, [stock, quantity]);
+
   const addToCart = () => {
-    if (isOutOfStock) return;
+    if (stock === 0 || quantity === 0) return;
     const cart = readCart();
     writeCart([...cart, ...Array.from({ length: quantity }, () => product)]);
     setAdded(true);

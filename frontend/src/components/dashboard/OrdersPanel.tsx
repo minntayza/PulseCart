@@ -70,52 +70,73 @@ export default function OrdersPanel() {
   const visibleOrders = filter === 'all' ? orders : orders.filter((order) => order.status === filter);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       <div className="flex flex-wrap gap-2 pb-2">
         {(['pending', 'approved', 'delivered', 'rejected', 'all'] as const).map((status) => (
-          <button key={status} onClick={() => setFilter(status)} className={`px-3 py-1.5 text-xs rounded-lg capitalize ${filter === status ? 'bg-primary text-white' : 'bg-white/5 text-text-muted'}`}>
-            {status} ({status === 'all' ? orders.length : orders.filter((order) => order.status === status).length})
+          <button key={status} onClick={() => setFilter(status)} className={`px-4 py-2 text-sm font-semibold rounded-full capitalize transition-all duration-300 ${filter === status ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-surface-alt text-text-secondary hover:bg-border-light'}`}>
+            {status} <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] ${filter === status ? 'bg-white/20' : 'bg-border/50'}`}>{status === 'all' ? orders.length : orders.filter((order) => order.status === status).length}</span>
           </button>
         ))}
       </div>
-      {error && <p className="text-xs text-danger" role="alert">{error}</p>}
-      {!visibleOrders.length && (
-        <div className="py-12 text-center">
-          <div className="text-3xl mb-2">📋</div>
-          <h3 className="font-medium">No {filter === 'all' ? '' : filter} orders</h3>
-          <p className="text-sm text-text-muted">Orders matching this filter will appear here.</p>
+      
+      {error && (
+        <div className="rounded-xl bg-danger-light p-4 border border-danger/20 flex items-start gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-danger mt-0.5"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>
+          <p className="text-sm text-danger" role="alert">{error}</p>
         </div>
       )}
-      {visibleOrders.map((order) => (
-        <div key={order.id} className="flex flex-wrap items-center gap-4 p-3 bg-white/5 rounded-lg">
-          <span className="text-2xl">{order.items[0]?.image ?? '📦'}</span>
-          <div className="flex-1 min-w-48">
-            <h4 className="text-sm font-medium">{order.items.map((item) => item.name).join(', ')}</h4>
-            <p className="text-xs text-text-muted">{order.customerName} · {order.id} · {new Date(order.createdAt).toLocaleString()}</p>
-            <p className="text-xs text-text-muted truncate">{order.address} · {order.phone}</p>
-          </div>
-          <strong className="text-sm text-primary">{formatPrice(order.total)}</strong>
-          <span className={`text-[10px] px-2 py-1 rounded-full ${
-            order.status === 'pending' ? 'bg-accent/10 text-accent' : order.status === 'approved' ? 'bg-primary/10 text-primary' : order.status === 'delivered' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
-          }`}>{order.status}</span>
-          {order.status === 'pending' && (
-            <div className="flex gap-2">
-              <button disabled={updatingId === order.id} onClick={() => changeStatus(order.id, 'approved')} className="px-3 py-1 bg-success/10 text-success text-xs rounded disabled:opacity-50">Approve</button>
-              <button disabled={updatingId === order.id} onClick={() => changeStatus(order.id, 'rejected')} className="px-3 py-1 bg-danger/10 text-danger text-xs rounded disabled:opacity-50">Reject</button>
-            </div>
-          )}
-          {order.status === 'approved' && (
-            <button disabled={updatingId === order.id} onClick={() => completeDelivery(order.id)} className="px-3 py-1 bg-success/10 text-success text-xs rounded disabled:opacity-50">
-              {updatingId === order.id ? 'Completing…' : 'Mark delivered'}
-            </button>
-          )}
-          {order.status === 'delivered' && (
-            <button disabled={updatingId === order.id} onClick={() => completeDelivery(order.id)} className="px-3 py-1 bg-primary/10 text-primary text-xs rounded disabled:opacity-50">
-              {updatingId === order.id ? 'Checking…' : 'Send/verify email'}
-            </button>
-          )}
+      
+      {!visibleOrders.length && (
+        <div className="py-16 text-center border-2 border-dashed border-border rounded-3xl bg-surface-alt/50">
+          <div className="text-4xl mb-4 opacity-50">📋</div>
+          <h3 className="font-bold text-foreground text-lg">No {filter === 'all' ? '' : filter} orders</h3>
+          <p className="text-sm text-text-muted mt-1">Orders matching this filter will appear here.</p>
         </div>
-      ))}
+      )}
+      
+      <div className="space-y-4">
+        {visibleOrders.map((order) => (
+          <div key={order.id} className="flex flex-col sm:flex-row sm:items-center gap-5 p-5 bg-surface border border-border rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-surface-alt text-3xl shrink-0">
+              {order.items[0]?.image ?? '📦'}
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-1">
+                <h4 className="text-base font-bold text-foreground truncate">{order.items.map((item) => item.name).join(', ')}</h4>
+                <span className={`shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                  order.status === 'pending' ? 'bg-accent-light text-accent' : order.status === 'approved' ? 'bg-primary-light text-primary' : order.status === 'delivered' ? 'bg-success-light text-success' : 'bg-danger-light text-danger'
+                }`}>{order.status}</span>
+              </div>
+              <p className="text-sm text-text-secondary font-medium">{order.customerName} <span className="text-border mx-1">•</span> <span className="font-mono text-xs">{order.id}</span> <span className="text-border mx-1">•</span> {new Date(order.createdAt).toLocaleString()}</p>
+              <p className="text-sm text-text-secondary truncate mt-1">{order.address} <span className="text-border mx-1">•</span> {order.phone}</p>
+            </div>
+            
+            <div className="flex items-center justify-between sm:flex-col sm:items-end sm:justify-center gap-4 shrink-0 sm:pl-4 sm:border-l sm:border-border-light">
+              <strong className="text-lg font-black text-foreground">{formatPrice(order.total)}</strong>
+              
+              <div className="flex gap-2">
+                {order.status === 'pending' && (
+                  <>
+                    <button disabled={updatingId === order.id} onClick={() => changeStatus(order.id, 'approved')} className="px-4 py-2 bg-primary-light text-primary hover:bg-primary-light/80 hover:text-primary-hover text-sm font-semibold rounded-xl transition-colors disabled:opacity-50">Approve</button>
+                    <button disabled={updatingId === order.id} onClick={() => changeStatus(order.id, 'rejected')} className="px-4 py-2 bg-danger-light text-danger hover:bg-danger-light/80 hover:text-danger text-sm font-semibold rounded-xl transition-colors disabled:opacity-50">Reject</button>
+                  </>
+                )}
+                {order.status === 'approved' && (
+                  <button disabled={updatingId === order.id} onClick={() => completeDelivery(order.id)} className="px-4 py-2 bg-success-light text-success hover:bg-success-light/80 hover:text-success text-sm font-semibold rounded-xl transition-colors disabled:opacity-50">
+                    {updatingId === order.id ? 'Completing…' : 'Mark delivered'}
+                  </button>
+                )}
+                {order.status === 'delivered' && (
+                  <button disabled={updatingId === order.id} onClick={() => completeDelivery(order.id)} className="px-4 py-2 bg-surface-alt text-foreground hover:bg-border-light text-sm font-semibold rounded-xl transition-colors disabled:opacity-50">
+                    {updatingId === order.id ? 'Checking…' : 'Verify email'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
