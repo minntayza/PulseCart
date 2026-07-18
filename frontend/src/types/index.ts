@@ -1,6 +1,5 @@
-/** Format a number as USD with thousand separators: 1395 → "$1,395.00" */
 export function formatPrice(price: number): string {
-  return `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `${price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} MMK`;
 }
 
 export interface Product {
