@@ -6,7 +6,7 @@ import ProductDetailActions from '@/components/ProductDetailActions';
 import { getProduct } from '@/services/productService';
 import { formatPrice, displayCategory } from '@/types';
 
-export function generateStaticParams() { return products.map((product) => ({ id: product.id })); }
+export const dynamic = 'force-dynamic';
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
