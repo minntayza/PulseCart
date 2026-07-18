@@ -5,6 +5,7 @@ backend/.env
 !backend/.env.example
 frontend/.env.local
 !frontend/.env.local.example
+backend/.crewai/**/credentials/
 __pycache__/
 *.py[cod]
 .pytest_cache/
