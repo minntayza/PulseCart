@@ -21,6 +21,9 @@ export default function ProductDetailActions({ product, stock }: { product: Prod
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1800);
   };
+
+  const isOutOfStock = stock === 0;
+
   return <div className="space-y-3">
     {!isOutOfStock && (
       <div className="flex items-center gap-3">

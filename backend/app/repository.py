@@ -242,6 +242,14 @@ class MemoryRepository:
                     return wp
         raise HTTPException(status_code=404, detail="Wanted product not found")
 
+    def delete_wanted_product(self, wanted_id: str) -> None:
+        with self._lock:
+            for index, wp in enumerate(self.wanted_products):
+                if wp.id == wanted_id:
+                    self.wanted_products.pop(index)
+                    return
+        raise HTTPException(status_code=404, detail="Wanted product not found")
+
 
 repository = MemoryRepository()
 
@@ -496,6 +504,11 @@ class SupabaseRepository:
             raise HTTPException(status_code=404, detail="Wanted product not found")
         r = response.data[0]
         return WantedProduct(id=str(r["id"]), userId=r["user_id"], productName=r["product_name"], description=r.get("description"), mentionCount=r["mention_count"], conversationId=r.get("conversation_id"), createdAt=r["created_at"], updatedAt=r["updated_at"], status=r["status"])
+
+    def delete_wanted_product(self, wanted_id: str) -> None:
+        response = self.client.table("wanted_products").delete().eq("id", wanted_id).execute()
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Wanted product not found")
 
 
 def get_repository() -> MemoryRepository | SupabaseRepository:

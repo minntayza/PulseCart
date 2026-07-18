@@ -106,3 +106,12 @@ def update_wanted(
     if status not in ("pending", "stocked", "dismissed"):
         raise HTTPException(status_code=422, detail="Invalid status")
     return repo.update_wanted_status(wanted_id, status)
+
+
+@router.delete("/wanted/{wanted_id}", status_code=204)
+def delete_wanted(
+    wanted_id: str,
+    _: AuthUser = Depends(manager_user),
+    repo: MemoryRepository | SupabaseRepository = Depends(get_repository),
+):
+    repo.delete_wanted_product(wanted_id)
