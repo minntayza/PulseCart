@@ -1,12 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Product } from '@/types';
 import { readCart, writeCart } from '@/services/storage';
+import { useAuth } from '@/components/AuthProvider';
+import { trackProductView } from '@/services/searchService';
 
 export default function ProductDetailActions({ product, stock }: { product: Product; stock: number }) {
+  const { accessToken, isLoading } = useAuth();
+  const tracked = useRef(false);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  useEffect(() => {
+    if (isLoading || !accessToken || tracked.current) return;
+    tracked.current = true;
+    void trackProductView(product.id, accessToken).catch(() => { tracked.current = false; });
+  }, [accessToken, isLoading, product.id]);
   const addToCart = () => {
     const cart = readCart();
     writeCart([...cart, ...Array.from({ length: quantity }, () => product)]);

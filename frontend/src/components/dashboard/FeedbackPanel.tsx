@@ -153,7 +153,7 @@ export default function FeedbackPanel() {
               <div key={msg.id} className="p-3 bg-surface-alt rounded-lg border border-border-light">
                 <div className="flex items-center gap-2 mb-1.5">
                   <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-white/10 text-text-secondary capitalize">{msg.theme}</span>
-                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${severityColors[msg.severity]}`}>{msg.severity}</span>
+                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${severityColors[msg.severity ?? 'low']}`}>{msg.severity ?? 'low'}</span>
                   <span className="text-[11px] text-text-muted ml-auto">{new Date(msg.createdAt).toLocaleDateString()}</span>
                 </div>
                 <p className="text-sm text-text-secondary leading-relaxed">{msg.message}</p>

@@ -1,25 +1,24 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { agentTraces as fixtureTraces } from '@/data/agents';
 import { AgentTrace } from '@/types';
-import { pulseCartEvents, readTraces } from '@/services/storage';
+import { getAgentTraces } from '@/services/agentService';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function AgentPanel() {
-  const [agentTraces, setAgentTraces] = useState<AgentTrace[]>(fixtureTraces);
-  const loadTraces = useCallback(() => {
-    const liveTraces = readTraces();
-    setAgentTraces(liveTraces.length ? liveTraces : fixtureTraces);
-  }, []);
+  const { accessToken } = useAuth();
+  const [agentTraces, setAgentTraces] = useState<AgentTrace[]>([]);
+  const loadTraces = useCallback(async () => {
+    if (!accessToken) return;
+    try { setAgentTraces(await getAgentTraces(accessToken)); } catch { /* keep last successful data */ }
+  }, [accessToken]);
 
   useEffect(() => {
-    const initialLoad = window.setTimeout(loadTraces, 0);
-    window.addEventListener(pulseCartEvents.tracesChanged, loadTraces);
-    window.addEventListener('storage', loadTraces);
+    const initialLoad = window.setTimeout(() => void loadTraces(), 0);
+    const interval = window.setInterval(() => void loadTraces(), 5000);
     return () => {
       window.clearTimeout(initialLoad);
-      window.removeEventListener(pulseCartEvents.tracesChanged, loadTraces);
-      window.removeEventListener('storage', loadTraces);
+      window.clearInterval(interval);
     };
   }, [loadTraces]);
   const statusColors = {
@@ -38,8 +37,8 @@ export default function AgentPanel() {
 
   return (
     <div className="space-y-4">
-      {agentTraces.map((agent) => (
-        <div key={agent.agentName} className="p-3 bg-white/5 rounded-lg">
+      {agentTraces.map((agent, index) => (
+        <div key={`${agent.agentName}-${agent.lastAction}-${index}`} className="p-3 bg-white/5 rounded-lg">
           <div className="flex items-center gap-3 mb-3">
             <span className="text-xl">{agent.agentIcon}</span>
             <div className="flex-1">

@@ -10,8 +10,10 @@ import Sidebar from '@/components/Sidebar';
 import ProductGrid from '@/components/ProductGrid';
 import CheckoutModal from '@/components/CheckoutModal';
 import AgentFeed from '@/components/AgentFeed';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function Home() {
+  const { accessToken, isLoading: isAuthLoading } = useAuth();
   const [category, setCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState<Product[]>([]);
@@ -70,7 +72,8 @@ export default function Home() {
     let active = true;
     const timer = window.setTimeout(async () => {
       try {
-        const result = await searchProducts(searchQuery);
+        if (isAuthLoading) return;
+        const result = await searchProducts(searchQuery, accessToken);
         if (active) { setRankedProducts(result.products); setCatalogError(''); }
       } catch {
         if (active) setCatalogError('Search is temporarily unavailable.');
@@ -80,7 +83,7 @@ export default function Home() {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [searchQuery]);
+  }, [searchQuery, accessToken, isAuthLoading]);
 
   const filteredProducts = category === 'all'
     ? rankedProducts

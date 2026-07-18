@@ -3,6 +3,8 @@ from app.main import app
 from app.models.schemas import Order
 from app.repository import SupabaseRepository, repository
 from app.services.email import delivery_email_html, rejection_email_html
+from app.agents.recommender import rank_products, update_search_interests
+from app.fixtures import PRODUCTS
 
 client = TestClient(app)
 customer = {"Authorization": "Bearer demo-customer-token"}
@@ -42,6 +44,33 @@ def test_search_ranks_gaming_laptop_first():
     assert response.status_code == 200
     assert response.json()["products"][0]["category"] == "laptops"
     assert response.json()["trace"]["logs"][-1]["type"] == "guardrail"
+
+
+def test_latest_search_outranks_old_and_only_half_matches_are_promoted():
+    iphone = [product.model_copy(update={"id": f"iphone-{index}", "name": f"iPhone {index}"}) for index, product in enumerate(PRODUCTS[:4], 1)]
+    acer = [PRODUCTS[0].model_copy(update={"id": "acer-1", "name": "Acer Swift"})]
+    catalog = iphone + acer + PRODUCTS[4:]
+
+    profile, promoted_iphone = update_search_interests("iphone", catalog, {})
+    assert len(promoted_iphone) == 2
+    profile, promoted_acer = update_search_interests("acer", catalog, profile)
+    assert len(promoted_acer) == 1
+
+    returning = rank_products("", catalog, profile)
+    assert returning.products[0].id == "acer-1"
+    assert next(i for i, p in enumerate(returning.products) if p.id == "acer-1") < next(i for i, p in enumerate(returning.products) if p.id == "iphone-1")
+
+
+def test_empty_feed_is_not_logged_but_product_click_is_logged_and_ranked_first():
+    before = len(repository.traces)
+    returning = client.post("/search", json={"query": ""}, headers=customer)
+    assert returning.status_code == 200
+    assert len(repository.traces) == before
+
+    viewed = client.post("/events/product-view/3", headers=customer)
+    assert viewed.status_code == 200
+    assert viewed.json()["products"][0]["id"] == "3"
+    assert repository.traces[0].lastAction == f"Customer viewed {repository.get_product('3').name}"
 
 
 def test_order_requires_auth_and_manager_decision():
