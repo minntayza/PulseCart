@@ -79,6 +79,7 @@ export default function ProductAdminPanel() {
       );
       setFields((prev) => ({
         ...prev,
+        description: result.shortDescription || prev.description,
         overview: result.overview,
         howItWorks: result.howItWorks,
         bestFor: result.bestFor.join(', '),

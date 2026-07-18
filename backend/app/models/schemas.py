@@ -135,6 +135,7 @@ class GenerateDetailsRequest(BaseModel):
 
 
 class GenerateDetailsResponse(BaseModel):
+    shortDescription: str
     overview: str
     howItWorks: str
     bestFor: list[str]

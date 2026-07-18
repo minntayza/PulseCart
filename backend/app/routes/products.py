@@ -10,6 +10,7 @@ router = APIRouter(prefix="/products", tags=["products"])
 DETAILS_SYSTEM_PROMPT = """You are a product copywriter for an e-commerce store called PulseCart.
 Given a product's name, category, and manager-written description, generate these fields as JSON:
 
+- shortDescription: A clean 1-2 sentence product summary for search results and cards. Polished version of the raw input.
 - overview: A polished 2-3 sentence product overview for the product detail page. Expand on the description naturally.
 - howItWorks: A 2-3 sentence explanation of how the product works or what it does.
 - bestFor: An array of 3-4 short strings describing ideal use cases or audiences.
@@ -17,9 +18,10 @@ Given a product's name, category, and manager-written description, generate thes
 
 Rules:
 - Return ONLY valid JSON. No markdown fences, no explanation.
-- The "overview" should be a refined, professional version of the input description.
+- The "shortDescription" should be a clean, professional 1-2 sentence summary.
+- The "overview" should be a refined, professional expansion of the input description.
 - Keep each string concise (under 100 characters).
-- The JSON must have exactly these 4 keys: overview, howItWorks, bestFor, limitations."""
+- The JSON must have exactly these 5 keys: shortDescription, overview, howItWorks, bestFor, limitations."""
 
 
 @router.get("", response_model=list[Product])
@@ -119,6 +121,7 @@ def generate_product_details(
 
         parsed = json.loads(text)
         return GenerateDetailsResponse(
+            shortDescription=parsed.get("shortDescription", ""),
             overview=parsed.get("overview", ""),
             howItWorks=parsed.get("howItWorks", ""),
             bestFor=parsed.get("bestFor", []),

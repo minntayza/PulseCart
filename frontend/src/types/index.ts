@@ -142,6 +142,7 @@ export interface GenerateDetailsRequest {
 }
 
 export interface GenerateDetailsResponse {
+  shortDescription: string;
   overview: string;
   howItWorks: string;
   bestFor: string[];
