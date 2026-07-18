@@ -86,4 +86,11 @@ def generate_product_details(
     except json.JSONDecodeError as exc:
         raise HTTPException(status_code=502, detail="AI returned invalid JSON. Please try again.") from exc
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"AI generation failed: {str(exc)[:300]}") from exc
+        # Surface full error from API proxy/Anthropic for debugging
+        detail = str(exc)
+        if hasattr(exc, 'response'):
+            resp = getattr(exc, 'response', None)
+            if resp is not None:
+                body = getattr(resp, 'text', '') or getattr(resp, 'content', '')
+                detail = f"{detail} | response: {body[:500]}"
+        raise HTTPException(status_code=502, detail=f"AI generation failed: {detail[:600]}") from exc
