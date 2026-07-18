@@ -127,9 +127,9 @@ export default function ChatPanel({ onClose }: { onClose?: () => void }) {
         {messages.length > 0 && (
           <button
             onClick={() => setMessages([])}
-            className="text-xs text-text-muted hover:text-foreground transition-colors"
+            className="rounded-md bg-background border border-border px-2 py-1 text-xs text-text-muted hover:text-foreground hover:border-primary/30 transition-colors"
           >
-            Clear
+            🗑 Clear
           </button>
         )}
       </div>
