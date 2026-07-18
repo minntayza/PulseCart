@@ -16,7 +16,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   if (!product) notFound();
   const details = getProductDetails(product);
   const related = products.filter((candidate) => candidate.category === product.category && candidate.id !== product.id).slice(0, 3);
-  const symbols = { laptops: '▰', chairs: '⌑', 'mobile phone': '📱', accessories: '✦' };
+  const symbols = { laptops: '▰', chairs: '⌑', headphones: '🎧', accessories: '✦' };
 
   return <main className="min-h-screen bg-background"><div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
     <nav className="mb-8 flex items-center gap-2 text-sm text-text-secondary font-medium"><Link href="/" className="hover:text-primary transition-colors">Shop</Link><span className="text-border">•</span><span className="capitalize">{displayCategory(product.category)}</span><span className="text-border">•</span><span className="truncate text-foreground">{product.name}</span></nav>

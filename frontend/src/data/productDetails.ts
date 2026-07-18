@@ -14,15 +14,9 @@ const categoryDetails: Record<string, Omit<ProductDetails, 'overview' | 'specifi
     warranty: '3-year limited warranty',
   },
   headphones: {
-    howItWorks: 'Mobile phones combine computing, communication, and sensors into a pocket-sized device. They connect via cellular networks and Wi-Fi, running apps for messaging, browsing, photography, and more.',
-    bestFor: ['Daily communication', 'On-the-go productivity', 'Photography and video', 'Navigation and entertainment'],
-    limitations: ['Battery life limits全天 usage', 'Screen size restricts detailed work', 'Performance varies by model and price'],
-    warranty: '1-year manufacturer warranty',
-  },
-  'mobile phone': {
-    howItWorks: 'Mobile phones combine computing, communication, and sensors into a pocket-sized device. They connect via cellular networks and Wi-Fi, running apps for messaging, browsing, photography, and more.',
-    bestFor: ['Daily communication', 'On-the-go productivity', 'Photography and video', 'Navigation and entertainment'],
-    limitations: ['Battery life limits全天 usage', 'Screen size restricts detailed work', 'Performance varies by model and price'],
+    howItWorks: 'Headphones convert electrical signals into sound waves that you hear directly. They use drivers (small speakers) to produce audio, with options for wired or wireless connections via Bluetooth.',
+    bestFor: ['Music listening', 'Gaming audio', 'Video calls and meetings', 'Noise cancellation for focus'],
+    limitations: ['Comfort varies by design (over-ear, on-ear, in-ear)', 'Battery life limits wireless use', 'Sound quality varies by price point'],
     warranty: '1-year manufacturer warranty',
   },
   accessories: {
@@ -43,7 +37,7 @@ export function getProductDetails(product: Product): ProductDetails {
   ];
 
   // Use database fields when available (AI-generated), fall back to template
-  const categoryLabel = { laptops: 'laptop', chairs: 'chair', headphones: 'mobile phone', 'mobile phone': 'mobile phone', accessories: 'computer accessory' }[product.category];
+  const categoryLabel = { laptops: 'laptop', chairs: 'chair', headphones: 'headphone', accessories: 'computer accessory' }[product.category];
   const templateOverview = `${product.name} is a ${categoryLabel} designed for people who want ${product.description.toLowerCase()}. It combines practical everyday use with the performance expected from its category.`;
 
   return {

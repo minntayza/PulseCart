@@ -2,10 +2,13 @@
 
 > Last updated: 2026-07-17T00:00:00
 
-## Current Phase: Phase 2 — Backend + Real Agents
+## Current Phase: Phase 3 — Judge Experience + Polish
 
-**Status:** NOT STARTED
-**Target:** TBD
+**Status:** IN PROGRESS
+**Target:** 2026-07-18
+
+## Milestone Summary
+- **v1 Summary:** `.planning/reports/MILESTONE_SUMMARY-v1.md`
 
 ## Phase 1: Foundation + Working Vertical Slice
 

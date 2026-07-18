@@ -3,9 +3,7 @@ export function formatPrice(price: number): string {
 }
 
 /** Map backend category names to frontend display labels */
-const CATEGORY_DISPLAY: Record<string, string> = {
-  headphones: 'mobile phone',
-};
+const CATEGORY_DISPLAY: Record<string, string> = {};
 export function displayCategory(category: string): string {
   return CATEGORY_DISPLAY[category] ?? category;
 }
@@ -13,7 +11,7 @@ export function displayCategory(category: string): string {
 export interface Product {
   id: string;
   name: string;
-  category: 'laptops' | 'chairs' | 'mobile phone' | 'accessories';
+  category: 'laptops' | 'chairs' | 'headphones' | 'accessories';
   price: number;
   image: string;
   description: string;

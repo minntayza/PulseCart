@@ -306,7 +306,7 @@ export default function ProductAdminPanel() {
                 <select value={fields.category} onChange={(e) => update('category', e.target.value)} className={input}>
                   <option value="laptops">Laptops</option>
                   <option value="chairs">Chairs</option>
-                  <option value="mobile phone">Mobile Phones</option>
+                  <option value="headphones">Headphones</option>
                   <option value="accessories">Accessories</option>
                 </select>
               </div>
