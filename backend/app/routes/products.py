@@ -52,53 +52,62 @@ def generate_product_details(
         raise HTTPException(status_code=500, detail="anthropic package is not installed")
 
     try:
-        client_kwargs: dict = {"api_key": settings.anthropic_api_key}
-        if settings.anthropic_base_url:
-            client_kwargs["base_url"] = settings.anthropic_base_url
+        import httpx
 
-        print(f"[generate-details] Connecting to: {settings.anthropic_base_url or 'https://api.anthropic.com'}")
+        base_url = (settings.anthropic_base_url or "https://api.anthropic.com").rstrip("/")
+        url = f"{base_url}/v1/messages"
+
+        print(f"[generate-details] POST {url}")
         print(f"[generate-details] Model: mimo-v2.5-pro")
 
-        client = anthropic.Anthropic(**client_kwargs)
-        message = client.messages.create(
-            model="mimo-v2.5-pro",
-            max_tokens=1024,
-            system=DETAILS_SYSTEM_PROMPT,
-            messages=[
+        payload = {
+            "model": "mimo-v2.5-pro",
+            "max_tokens": 1024,
+            "system": DETAILS_SYSTEM_PROMPT,
+            "messages": [
                 {
                     "role": "user",
                     "content": f"Product name: {body.name}\nCategory: {body.category}\nDescription: {body.description}",
                 }
             ],
-        )
+        }
 
-        text = message.content[0].text.strip()
+        with httpx.Client(timeout=60) as client:
+            resp = client.post(
+                url,
+                json=payload,
+                headers={
+                    "x-api-key": settings.anthropic_api_key,
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json",
+                },
+            )
+
+        print(f"[generate-details] Response status: {resp.status_code}")
+
+        if resp.status_code != 200:
+            print(f"[generate-details] Error body: {resp.text[:500]}")
+            raise HTTPException(
+                status_code=502,
+                detail=f"AI API returned status {resp.status_code}: {resp.text[:300]}",
+            )
+
+        data = resp.json()
+        text = data["content"][0]["text"].strip()
         # Strip markdown fences if present
         if text.startswith("```"):
             text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
 
-        data = json.loads(text)
+        parsed = json.loads(text)
         return GenerateDetailsResponse(
-            overview=data.get("overview", ""),
-            howItWorks=data.get("howItWorks", ""),
-            bestFor=data.get("bestFor", []),
-            limitations=data.get("limitations", []),
+            overview=parsed.get("overview", ""),
+            howItWorks=parsed.get("howItWorks", ""),
+            bestFor=parsed.get("bestFor", []),
+            limitations=parsed.get("limitations", []),
         )
     except HTTPException:
         raise
     except json.JSONDecodeError as exc:
         raise HTTPException(status_code=502, detail="AI returned invalid JSON. Please try again.") from exc
     except Exception as exc:
-        # Surface full error from API proxy/Anthropic for debugging
-        detail = str(exc)
-        status_code = 502
-        if hasattr(exc, 'status_code'):
-            status_code = getattr(exc, 'status_code') or 502
-        if hasattr(exc, 'response'):
-            resp = getattr(exc, 'response', None)
-            if resp is not None:
-                body = getattr(resp, 'text', '') or ''
-                headers = dict(getattr(resp, 'headers', {})) if hasattr(resp, 'headers') else {}
-                detail = f"status={status_code} body={body[:500]} headers={headers}"
-                print(f"[generate-details] API error: {detail}")
-        raise HTTPException(status_code=502, detail=f"AI generation failed: {detail[:600]}") from exc
+        raise HTTPException(status_code=502, detail=f"AI generation failed: {str(exc)[:500]}") from exc
