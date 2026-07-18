@@ -318,6 +318,6 @@ python scripts/set_user_role.py manager@pulsecart.demo manager
 3. **Backend Pydantic models** use camelCase aliases for JSON serialization
 4. **Frontend TypeScript interfaces** match backend camelCase output
 5. **Products use `is_active`** (DB) mapped to `isActive` (API/model)
-6. **Category mapping:** Backend stores `headphones`, frontend displays as `mobile phone`
+6. **Category:** `headphones` — used in both backend and frontend
 7. **Product images** stored in Supabase Storage bucket `product-images`
 8. **RLS policies** enforce per-table access control in Supabase
