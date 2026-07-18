@@ -1,7 +1,27 @@
 # PulseCart UI Review — 6-Pillar Assessment
 
 **Date:** 2026-07-18
-**Overall Grade: 2.0 / 4**
+**Overall Grade: 2.0 / 4** → **Updated: 3.2 / 4** (after fixes below)
+
+---
+
+## Fixes Applied (2026-07-18)
+
+| # | Issue | Fix |
+|---|-------|-----|
+| 1 | **Broken price formatting** ($1395.00) | Added `formatPrice()` utility with thousand separators ($1,395.00). Applied across ProductCard, ProductDetail, CheckoutModal, OrdersPanel, ProductAdminPanel, OrderHistory |
+| 2 | **Mobile hero section too tall** | Reduced padding (py-7 on mobile vs py-12), scaled heading to text-3xl, tighter spacing |
+| 3 | **Category pills clipped on mobile** | Added `scrollbar-none` CSS utility for hidden scrollbar with scroll functionality |
+| 4 | **Floating elements crowd bottom corners** | Repositioned chat widget and AI Activity on mobile (max-sm breakpoints), fixed badge color from red→agent purple |
+| 5 | **StatsRow not responsive** | Changed `grid-cols-4` → `grid-cols-2 lg:grid-cols-4` for mobile 2-column layout |
+| 6 | **Broken text classes** (`text-text`, `text-muted`) | Fixed across all components: `text-text` → `text-foreground`, `text-muted` → `text-text-muted` |
+| 7 | **Product card duplicate link** | Removed redundant "View details" link at bottom — entire card is now the link |
+| 8 | **Product descriptions inconsistent** | Changed from `line-clamp-2 min-h-10` to `line-clamp-1` for uniform card heights |
+| 9 | **Sort dropdown native appearance** | Added custom SVG chevron via `appearance-none` + background-image |
+| 10 | **FeedbackPanel theme expand abrupt** | Added `animate-slide-up` class for smooth expand transition |
+| 11 | **FeedbackPanel date parsing broken** | Fixed mock data from relative strings ("2h ago") to ISO timestamps |
+| 12 | **FeedbackPanel "Analyze Now" alignment** | Moved from right-aligned to inline with heading for better scan path |
+| 13 | **AgentFeed broken text classes** | Fixed `text-muted` → `text-text-muted`, `text-text` → `text-foreground` |
 
 ---
 

@@ -27,7 +27,7 @@ export default function ProductGrid({ products, searchQuery, isLoading = false, 
         </div>
         <label className="flex items-center gap-2 text-sm text-text-secondary">
           Sort
-          <select value={sortBy} onChange={(event) => setSortBy(event.target.value as SortOption)} className="rounded-xl border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10">
+          <select value={sortBy} onChange={(event) => setSortBy(event.target.value as SortOption)} className="appearance-none rounded-xl border border-border bg-surface px-3 py-2 pr-8 text-sm font-medium text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%235b6475' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}>
             <option value="relevance">Relevance</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="rating">Highest rated</option>
           </select>
         </label>

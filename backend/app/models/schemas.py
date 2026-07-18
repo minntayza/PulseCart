@@ -126,3 +126,17 @@ class FeedbackInsights(BaseModel):
     themes: list[FeedbackTheme]
     totalMessages: int
     analyzedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class GenerateDetailsRequest(BaseModel):
+    name: str = Field(min_length=2, max_length=150)
+    category: Category
+    description: str = Field(min_length=5, max_length=500)
+
+
+class GenerateDetailsResponse(BaseModel):
+    shortDescription: str
+    overview: str
+    howItWorks: str
+    bestFor: list[str]
+    limitations: list[str]

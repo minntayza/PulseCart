@@ -44,11 +44,11 @@ export default function AgentPanel() {
             <span className="text-xl">{agent.agentIcon}</span>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-text">{agent.agentName}</span>
+                <span className="text-sm font-medium text-foreground">{agent.agentName}</span>
                 <span className={`w-2 h-2 rounded-full ${statusColors[agent.status]}`} />
-                <span className="text-[10px] text-muted capitalize">{agent.status}</span>
+                <span className="text-[10px] text-text-muted capitalize">{agent.status}</span>
               </div>
-              <p className="text-xs text-muted">{agent.lastAction} · {agent.lastRun}</p>
+              <p className="text-xs text-text-muted">{agent.lastAction} · {agent.lastRun}</p>
             </div>
           </div>
 
@@ -56,9 +56,9 @@ export default function AgentPanel() {
           <div className="space-y-1 ml-8">
             {agent.logs.map((log, i) => (
               <div key={i} className="flex items-start gap-2 text-xs">
-                <span className="text-muted font-mono shrink-0">{log.timestamp}</span>
+                <span className="text-text-muted font-mono shrink-0">{log.timestamp}</span>
                 <span className={`font-medium shrink-0 w-16 ${typeColors[log.type]}`}>{log.type}</span>
-                <span className="text-text/70">{log.text}</span>
+                <span className="text-foreground/70">{log.text}</span>
               </div>
             ))}
           </div>

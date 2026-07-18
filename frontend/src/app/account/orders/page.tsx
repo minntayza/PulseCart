@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
-import { Order } from '@/types';
+import { Order, formatPrice } from '@/types';
 import { getOrdersForUser } from '@/services/orderService';
 import { OrderSkeleton } from '@/components/Skeleton';
 
@@ -36,13 +36,13 @@ export default function OrderHistoryPage() {
   return (
     <main className="max-w-5xl mx-auto p-6">
       <h1 className="text-2xl font-bold">My Orders</h1>
-      <p className="text-sm text-muted mt-1 mb-6">Track pending decisions and review your purchase history.</p>
-      {!orders.length ? <div className="py-16 text-center bg-surface border border-border rounded-xl"><p className="text-muted mb-4">You have not placed an order yet.</p><Link href="/" className="text-primary">Browse products</Link></div> : (
+      <p className="text-sm text-text-muted mt-1 mb-6">Track pending decisions and review your purchase history.</p>
+      {!orders.length ? <div className="py-16 text-center bg-surface border border-border rounded-xl"><p className="text-text-muted mb-4">You have not placed an order yet.</p><Link href="/" className="text-primary">Browse products</Link></div> : (
         <div className="space-y-4">
           {orders.map((order) => (
             <article key={order.id} className="bg-surface border border-border rounded-xl p-4">
               <div className="flex flex-wrap justify-between gap-3 mb-3">
-                <div><h2 className="font-mono font-semibold">{order.id}</h2><p className="text-xs text-muted">{new Date(order.createdAt).toLocaleString()}</p></div>
+                <div><h2 className="font-mono font-semibold">{order.id}</h2><p className="text-xs text-text-muted">{new Date(order.createdAt).toLocaleString()}</p></div>
                 <span className={`h-fit text-xs px-3 py-1 rounded-full ${order.status === 'pending' ? 'bg-accent/10 text-accent' : order.status === 'approved' ? 'bg-primary/10 text-primary' : order.status === 'delivered' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>{order.status}</span>
               </div>
               {order.status === 'delivered' && <div role="status" className="mb-3 rounded-lg bg-success/10 p-3 text-sm font-medium text-success">Delivery process is done</div>}
@@ -50,9 +50,9 @@ export default function OrderHistoryPage() {
                 {Object.values(order.items.reduce<Record<string, { product: Order['items'][number]; quantity: number }>>((grouped, product) => {
                   grouped[product.id] = grouped[product.id] ? { product, quantity: grouped[product.id].quantity + 1 } : { product, quantity: 1 };
                   return grouped;
-                }, {})).map(({ product, quantity }) => <div key={product.id} className="flex justify-between text-sm"><span>{product.image} {product.name} × {quantity}</span><span>${(product.price * quantity).toFixed(2)}</span></div>)}
+                }, {})).map(({ product, quantity }) => <div key={product.id} className="flex justify-between text-sm"><span>{product.image} {product.name} × {quantity}</span><span>{formatPrice(product.price * quantity)}</span></div>)}
               </div>
-              <div className="flex justify-between mt-3"><span className="text-xs text-muted">Deliver to: {order.address}</span><strong className="text-primary">${order.total.toFixed(2)}</strong></div>
+              <div className="flex justify-between mt-3"><span className="text-xs text-text-muted">Deliver to: {order.address}</span><strong className="text-primary">{formatPrice(order.total)}</strong></div>
             </article>
           ))}
         </div>

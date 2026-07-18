@@ -8,7 +8,7 @@ export default function MarketPanel() {
       {competitorPrices.map((item, i) => (
         <div key={i} className="p-3 bg-white/5 rounded-lg">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm font-medium text-text">{item.productName}</h4>
+            <h4 className="text-sm font-medium text-foreground">{item.productName}</h4>
             <span className={`text-[10px] font-medium px-2 py-1 rounded-full ${
               item.recommendation === 'keep' ? 'bg-success/10 text-success' :
               item.recommendation === 'review' ? 'bg-accent/10 text-accent' :
@@ -19,12 +19,12 @@ export default function MarketPanel() {
           </div>
           <div className="flex items-center gap-4 text-xs">
             <div>
-              <span className="text-muted">Ours: </span>
-              <span className="text-text font-bold">${item.ourPrice}</span>
+              <span className="text-text-muted">Ours: </span>
+              <span className="text-foreground font-bold">${item.ourPrice}</span>
             </div>
             <div>
-              <span className="text-muted">Competitor: </span>
-              <span className="text-text">${item.competitorPrice}</span>
+              <span className="text-text-muted">Competitor: </span>
+              <span className="text-foreground">${item.competitorPrice}</span>
             </div>
             <div>
               <span className={`font-bold ${item.gapPercent > 0 ? 'text-danger' : 'text-success'}`}>
@@ -39,7 +39,7 @@ export default function MarketPanel() {
               style={{ width: `${(item.ourPrice / Math.max(item.ourPrice, item.competitorPrice)) * 100}%` }}
             />
             <div
-              className="h-full bg-muted/50 rounded-full ml-1"
+              className="h-full bg-text-text-muted/50 rounded-full ml-1"
               style={{ width: `${(item.competitorPrice / Math.max(item.ourPrice, item.competitorPrice)) * 100}%` }}
             />
           </div>
