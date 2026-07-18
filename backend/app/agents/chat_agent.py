@@ -110,6 +110,22 @@ def _api_chat(
         result_text = result_text.rsplit("```", 1)[0]
     result_text = result_text.strip()
 
+    # Try to extract JSON block from the response (LLM may output text + JSON)
+    import re
+    json_match = re.search(r'\{[\s\S]*"response"[\s\S]*\}', result_text)
+    if json_match:
+        try:
+            parsed = json.loads(json_match.group())
+            # Use the text before the JSON block as the display response
+            display_text = result_text[:json_match.start()].strip()
+            return ChatResponse(
+                response=display_text or parsed.get("response", "I'm here to help!"),
+                productIds=parsed.get("productIds", []),
+                wantedProduct=parsed.get("wantedProduct"),
+            )
+        except json.JSONDecodeError:
+            pass
+
     try:
         parsed = json.loads(result_text)
         return ChatResponse(
