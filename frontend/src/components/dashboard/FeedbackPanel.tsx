@@ -17,9 +17,10 @@ export default function FeedbackPanel() {
 
   useEffect(() => {
     if (!accessToken) {
-      const timer = window.setTimeout(() => setLoading(false), 0);
+      const timer = window.setTimeout(() => setHasLoaded(true), 0);
       return () => window.clearTimeout(timer);
     }
+    let cancelled = false;
     Promise.all([getInsights(accessToken), getFeedback(accessToken)])
       .then(([ins, msgs]) => {
         if (!cancelled) {

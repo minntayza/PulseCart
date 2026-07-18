@@ -6,3 +6,5 @@ httpx>=0.28,<1
 pytest>=8,<9
 python-multipart>=0.0.20,<1
 anthropic>=0.40,<1
+crewai>=0.28,<1
+langchain>=0.1,<1

@@ -15,13 +15,19 @@ const visuals = {
 export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const visual = visuals[product.category];
   const badge = product.badge === 'agent' ? 'AI pick' : product.badge === 'trending' ? 'Trending' : product.badge === 'match' ? 'Best match' : null;
+  const isOutOfStock = (product.stock ?? 0) === 0;
 
   return (
-    <article className="group overflow-hidden rounded-3xl border border-border/80 bg-surface shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-card-hover">
+    <article className={`group overflow-hidden rounded-3xl border border-border/80 bg-surface shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-card-hover ${isOutOfStock ? 'opacity-75 hover:opacity-90' : ''}`}>
       <Link href={`/products/${product.id}`} aria-label={`View details for ${product.name}`} className={`relative block h-52 overflow-hidden bg-gradient-to-br ${visual.gradient}`} style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { display: 'grid', placeItems: 'center' }}>
         <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/50 blur-2xl" />
-        {!product.imageUrl && <span className="select-none text-7xl font-black text-foreground/70 transition-transform duration-300 group-hover:scale-110">{visual.symbol}</span>}
+        {!product.imageUrl && <span className={`select-none text-7xl font-black text-foreground/70 transition-transform duration-300 ${isOutOfStock ? '' : 'group-hover:scale-110'}`}>{visual.symbol}</span>}
         {badge && <span className="absolute left-4 top-4 rounded-full border border-white/70 bg-white/85 px-3 py-1 text-[11px] font-semibold text-foreground shadow-sm backdrop-blur">{badge}</span>}
+        {isOutOfStock && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+            <span className="rounded-full bg-white/90 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-danger shadow-lg">Out of Stock</span>
+          </div>
+        )}
         <span className="absolute bottom-4 right-4 rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-secondary">{product.category}</span>
       </Link>
       <div className="p-5">
@@ -30,10 +36,20 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         <div className="mt-3 flex items-center gap-2 text-xs">
           <span className="font-semibold text-accent">★ {product.rating}</span>
           <span className="text-text-muted">{product.reviews} reviews</span>
+          {isOutOfStock && <span className="text-danger font-medium">· No stock</span>}
         </div>
         <div className="mt-4 flex items-center justify-between gap-3">
-          <div><span className="text-xs text-text-muted">From</span><p className="text-xl font-extrabold tracking-tight text-foreground">{formatPrice(product.price)}</p></div>
-          <button onClick={() => onAddToCart(product)} className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover focus:outline-none focus:ring-4 focus:ring-primary/15">Add to cart</button>
+          <div>
+            <span className="text-xs text-text-muted">From</span>
+            <p className="text-xl font-extrabold tracking-tight text-foreground">{formatPrice(product.price)}</p>
+          </div>
+          {isOutOfStock ? (
+            <span className="rounded-xl border border-border bg-surface-alt px-4 py-2.5 text-sm font-semibold text-text-muted cursor-not-allowed">
+              Sold out
+            </span>
+          ) : (
+            <button onClick={() => onAddToCart(product)} className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover focus:outline-none focus:ring-4 focus:ring-primary/15">Add to cart</button>
+          )}
         </div>
       </div>
     </article>

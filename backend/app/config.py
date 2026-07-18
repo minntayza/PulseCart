@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     smtp_use_tls: bool = True
     anthropic_api_key: str | None = None
     anthropic_base_url: str | None = None
+    chat_model: str = "mimo-v2.5-pro"
+    chat_max_tokens: int = 1024
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

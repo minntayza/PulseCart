@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import get_settings
-from .routes import agents, feedback, manager_products, orders, products, search
+from .routes import agents, chat, feedback, manager_products, orders, products, search
 
 settings = get_settings()
 api = FastAPI(title=settings.app_name, version="0.1.0")
@@ -18,6 +18,7 @@ api.include_router(orders.router)
 api.include_router(agents.router)
 api.include_router(feedback.router)
 api.include_router(manager_products.router)
+api.include_router(chat.router)
 
 @api.get("/health", tags=["system"])
 def health():

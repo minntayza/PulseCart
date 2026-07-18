@@ -11,21 +11,29 @@ A hackathon prototype demonstrating multi-agent orchestration in a shopping cont
 
 ## Technology Stack
 
-Technology stack not yet documented. Will populate after codebase mapping or first phase.
+- **Frontend:** Next.js 16, React 19, Tailwind CSS 4, TypeScript, Supabase JS client
+- **Backend:** FastAPI (Python), Pydantic Settings, Supabase Python client, httpx
+- **Agents:** CrewAI, LangChain, Anthropic SDK (feedback agent LLM)
+- **Database:** Supabase (PostgreSQL + pgvector), with in-memory mock mode
+- **Auth:** Supabase Auth (JWT) with demo token fallback
 <!-- GSD:stack-end -->
 
 <!-- GSD:conventions-start source:CONVENTIONS.md -->
 
 ## Conventions
 
-Conventions not yet established. Will populate as patterns emerge during development.
+- Backend Pydantic models use camelCase aliases (`by_alias=True`) for JSON serialization
+- Frontend TypeScript interfaces match backend camelCase output
+- Email notifications are sent in Burmese language
+- Agent traces are capped at 100 entries (backend) / 20 entries (frontend localStorage)
+- Products use `is_active` (DB) mapped to `isActive` (API/model)
 <!-- GSD:conventions-end -->
 
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
 
 ## Architecture
 
-Architecture not yet mapped. Follow existing patterns found in the codebase.
+Monorepo with `frontend/` (Next.js App Router) and `backend/` (FastAPI). Backend uses a dual repository pattern: `MemoryRepository` for mock mode, `SupabaseRepository` for production. Four AI agents (recommender, market_analyst, order_coordinator, feedback_agent) are standalone Python functions. Frontend services abstract API calls with localStorage-backed mock implementations.
 <!-- GSD:architecture-end -->
 
 <!-- GSD:skills-start source:skills/ -->

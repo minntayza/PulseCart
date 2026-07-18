@@ -140,3 +140,48 @@ class GenerateDetailsResponse(BaseModel):
     howItWorks: str
     bestFor: list[str]
     limitations: list[str]
+
+
+# ── Chat models ──────────────────────────────────────────────
+
+class ChatConversation(BaseModel):
+    id: str
+    userId: str
+    title: str
+    createdAt: str
+    updatedAt: str
+
+
+class ChatMessage(BaseModel):
+    id: str
+    conversationId: str
+    role: Literal["user", "assistant"]
+    content: str
+    productIds: list[str] = []
+    createdAt: str
+
+
+class WantedProduct(BaseModel):
+    id: str
+    userId: str
+    productName: str
+    description: str | None = None
+    mentionCount: int = 1
+    conversationId: str | None = None
+    createdAt: str
+    updatedAt: str
+    status: Literal["pending", "stocked", "dismissed"] = "pending"
+
+
+class CreateConversationRequest(BaseModel):
+    firstMessage: str | None = None
+
+
+class SendMessageRequest(BaseModel):
+    content: str = Field(min_length=1, max_length=2000)
+
+
+class ChatResponse(BaseModel):
+    response: str
+    productIds: list[str] = []
+    wantedProduct: dict | None = None

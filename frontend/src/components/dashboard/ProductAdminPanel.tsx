@@ -28,6 +28,7 @@ export default function ProductAdminPanel() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [stockFilter, setStockFilter] = useState<'all' | 'in-stock' | 'out-of-stock'>('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const update = (name: keyof typeof fields, value: string) => setFields((current) => ({ ...current, [name]: value }));
@@ -148,9 +149,13 @@ export default function ProductAdminPanel() {
 
   const input = 'mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10';
   const categories = ['all', ...Array.from(new Set(products.map((p) => p.category)))];
+  const outOfStockCount = products.filter((p) => (p.stock ?? 0) === 0).length;
   const filteredProducts = products.filter(
     (p) =>
       (selectedCategory === 'all' || p.category === selectedCategory) &&
+      (stockFilter === 'all' ||
+        (stockFilter === 'out-of-stock' && (p.stock ?? 0) === 0) ||
+        (stockFilter === 'in-stock' && (p.stock ?? 0) > 0)) &&
       p.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
@@ -162,6 +167,39 @@ export default function ProductAdminPanel() {
           <button type="button" onClick={() => selectProduct(null)} className="w-full py-2 bg-primary text-white rounded-lg text-sm font-bold">
             + Add New Product
           </button>
+
+          {/* Stock toggle */}
+          <div className="flex rounded-lg border border-border bg-background p-0.5">
+            {([
+              { key: 'all', label: 'All', count: products.length },
+              { key: 'in-stock', label: 'In stock', count: products.length - outOfStockCount },
+              { key: 'out-of-stock', label: 'Out of stock', count: outOfStockCount },
+            ] as const).map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setStockFilter(opt.key)}
+                className={`flex-1 flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                  stockFilter === opt.key
+                    ? opt.key === 'out-of-stock' && outOfStockCount > 0
+                      ? 'bg-danger/10 text-danger shadow-sm'
+                      : 'bg-surface text-foreground shadow-sm'
+                    : 'text-text-muted hover:text-foreground'
+                }`}
+              >
+                {opt.label}
+                <span className={`inline-flex items-center justify-center min-w-[16px] h-4 rounded-full px-1 text-[10px] font-bold ${
+                  stockFilter === opt.key
+                    ? opt.key === 'out-of-stock' && outOfStockCount > 0
+                      ? 'bg-danger/20 text-danger'
+                      : 'bg-primary/10 text-primary'
+                    : 'bg-border text-text-muted'
+                }`}>
+                  {opt.count}
+                </span>
+              </button>
+            ))}
+          </div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {categories.map((c) => (
               <button
@@ -183,22 +221,43 @@ export default function ProductAdminPanel() {
           />
         </div>
         <div className="overflow-y-auto p-2 space-y-1">
-          {filteredProducts.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => selectProduct(p)}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedProduct?.id === p.id ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-surface-alt'}`}
-            >
-              {p.name}
-            </button>
-          ))}
+          {filteredProducts.map((p) => {
+            const isOutOfStock = (p.stock ?? 0) === 0;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => selectProduct(p)}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between gap-2 ${
+                  selectedProduct?.id === p.id
+                    ? 'bg-primary/10 text-primary font-bold'
+                    : isOutOfStock
+                      ? 'hover:bg-danger/5 text-text-muted'
+                      : 'hover:bg-surface-alt'
+                }`}
+              >
+                <span className={`truncate ${isOutOfStock ? 'line-through decoration-danger/30' : ''}`}>{p.name}</span>
+                {isOutOfStock && (
+                  <span className="shrink-0 text-[10px] font-bold bg-danger/10 text-danger px-1.5 py-0.5 rounded-full">
+                    0
+                  </span>
+                )}
+              </button>
+            );
+          })}
           {filteredProducts.length === 0 && <p className="text-center text-xs text-text-muted mt-4">No products found</p>}
         </div>
       </aside>
 
       {/* Form */}
       <form onSubmit={submit} className="space-y-4 rounded-2xl border border-border bg-surface p-5">
+        {selectedProduct && (selectedProduct.stock ?? 0) === 0 && (
+          <div className="flex items-center gap-2 rounded-xl border border-danger/20 bg-danger/5 px-3 py-2.5 text-sm text-danger animate-fade-in">
+            <span className="text-base">⚠️</span>
+            <span className="font-medium">This product is out of stock.</span>
+            <span className="text-danger/70 text-xs">Update the stock quantity above to make it available again.</span>
+          </div>
+        )}
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-lg font-bold">{selectedProduct ? 'Edit product' : 'Add a product'}</h2>
